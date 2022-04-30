@@ -1,24 +1,18 @@
 import { Text } from '@gnosis.pm/safe-react-components'
 import { ReactElement } from 'react'
-import { md } from 'src/theme/variables'
-import styled from 'styled-components'
 
-const StyledText = styled(Text)`
-  margin-bottom: ${md};
-`
-
-const DelegateCallWarning = ({ showWarning }: { showWarning: boolean }): ReactElement => {
-  if (showWarning) {
+const DelegateCallWarning = ({ isKnown }: { isKnown: boolean }): ReactElement => {
+  if (!isKnown) {
     return (
-      <StyledText size="xl" strong color="error">
+      <Text size="xl" strong as="span" color="error">
         ⚠️ Unexpected Delegate Call
-      </StyledText>
+      </Text>
     )
   }
   return (
-    <StyledText size="xl" strong>
+    <Text size="xl" strong as="span">
       Delegate Call
-    </StyledText>
+    </Text>
   )
 }
 

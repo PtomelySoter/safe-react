@@ -14,8 +14,6 @@ import {
   TransactionListItem,
   TransactionListPage,
   TransactionStatus,
-  TransactionInfo,
-  SettingsChange,
 } from '@gnosis.pm/safe-react-gateway-sdk'
 
 /**
@@ -29,6 +27,7 @@ export const LocalTransactionStatus: Record<string, TransactionStatus> = {
   FAILED: 'FAILED',
   SUCCESS: 'SUCCESS',
   PENDING: 'PENDING',
+  PENDING_FAILED: 'PENDING_FAILED',
   WILL_BE_REPLACED: 'WILL_BE_REPLACED',
 }
 
@@ -124,6 +123,7 @@ export const isMultisigExecutionInfo = (value: TransactionSummary['executionInfo
 export const isTxQueued = (value: LocalTransactionStatus): boolean => {
   return [
     LocalTransactionStatus.PENDING,
+    LocalTransactionStatus.PENDING_FAILED,
     LocalTransactionStatus.AWAITING_CONFIRMATIONS,
     LocalTransactionStatus.AWAITING_EXECUTION,
     LocalTransactionStatus.WILL_BE_REPLACED,

@@ -37,10 +37,6 @@ const styles = createStyles({
     padding: '9px',
     lineHeight: 1,
   },
-  ens: {
-    paddingBottom: md,
-    fontWeight: 'bold',
-  },
   details: {
     padding: `0 ${md}`,
     height: '20px',
@@ -102,7 +98,6 @@ type Props = {
   openDashboard?: (() => void | null) | boolean
   provider?: string
   userAddress: string
-  ensName: string
 }
 
 const useStyles = makeStyles(styles)
@@ -113,7 +108,6 @@ export const UserDetails = ({
   openDashboard,
   provider,
   userAddress,
-  ensName,
 }: Props): React.ReactElement => {
   const connectedNetwork = useSelector(networkSelector)
   const classes = useStyles()
@@ -128,11 +122,6 @@ export const UserDetails = ({
             <KeyRing circleSize={75} dotRight={25} dotSize={25} dotTop={50} hideDot keySize={30} mode="warning" />
           )}
         </Row>
-        {ensName && (
-          <Block className={classes.ens} justify="center">
-            {ensName}
-          </Block>
-        )}
         <Block className={classes.user} justify="center">
           {userAddress ? (
             <PrefixedEthHashInfo

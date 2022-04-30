@@ -1,4 +1,4 @@
-import { ReactElement, useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import { ReactElement, useState, useRef, useCallback, useEffect } from 'react'
 import styled from 'styled-components'
 import { Loader, Card, Title } from '@gnosis.pm/safe-react-components'
 import {
@@ -10,6 +10,7 @@ import {
   SignMessageParams,
   RequestId,
 } from '@gnosis.pm/safe-apps-sdk'
+
 import { useSelector } from 'react-redux'
 import { INTERFACE_MESSAGES, Transaction, LowercaseNetworks } from '@gnosis.pm/safe-apps-sdk-v1'
 import Web3 from 'web3'
@@ -31,10 +32,6 @@ import { logError, Errors } from 'src/logic/exceptions/CodedException'
 import { addressBookEntryName } from 'src/logic/addressBook/store/selectors'
 import { useSignMessageModal } from '../hooks/useSignMessageModal'
 import { SignMessageModal } from './SignMessageModal'
-import { web3HttpProviderOptions } from 'src/logic/wallets/getWeb3'
-import { useThirdPartyCookies } from '../hooks/useThirdPartyCookies'
-import { ThirdPartyCookiesWarning } from './ThirdPartyCookiesWarning'
-import { grantedSelector } from 'src/routes/safe/container/selector'
 
 const AppWrapper = styled.div`
   display: flex;
@@ -81,6 +78,10 @@ const INITIAL_CONFIRM_TX_MODAL_STATE: ConfirmTransactionModalState = {
   params: undefined,
 }
 
+const safeAppWeb3Provider = new Web3.providers.HttpProvider(getSafeAppsRpcServiceUrl(), {
+  timeout: 10_000,
+})
+
 const URL_NOT_PROVIDED_ERROR = 'App url No provided or it is invalid.'
 const APP_LOAD_ERROR = 'There was an error loading the Safe App. There might be a problem with the App provider.'
 
@@ -88,7 +89,6 @@ const AppFrame = ({ appUrl }: Props): ReactElement => {
   const { address: safeAddress, ethBalance, owners, threshold } = useSelector(currentSafe)
   const { nativeCurrency, chainId, chainName, shortName } = getChainInfo()
   const safeName = useSelector((state) => addressBookEntryName(state, { address: safeAddress }))
-  const granted = useSelector(grantedSelector)
   const { trackEvent } = useAnalytics()
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [confirmTransactionModal, setConfirmTransactionModal] =
@@ -100,13 +100,6 @@ const AppFrame = ({ appUrl }: Props): ReactElement => {
   const [isLoadingSlow, setIsLoadingSlow] = useState<boolean>(false)
   const errorTimer = useRef<number>()
   const [, setAppLoadError] = useState<boolean>(false)
-  const { thirdPartyCookiesDisabled, setThirdPartyCookiesDisabled } = useThirdPartyCookies()
-
-  const safeAppsRpc = getSafeAppsRpcServiceUrl()
-  const safeAppWeb3Provider = useMemo(
-    () => new Web3.providers.HttpProvider(safeAppsRpc, web3HttpProviderOptions),
-    [safeAppsRpc],
-  )
 
   useEffect(() => {
     const clearTimeouts = () => {
@@ -176,9 +169,6 @@ const AppFrame = ({ appUrl }: Props): ReactElement => {
   const communicator = useAppCommunicator(iframeRef, safeApp)
 
   useEffect(() => {
-    /**
-     * @deprecated: getEnvInfo is a legacy method. Should not be used
-     */
     communicator?.on('getEnvInfo', () => ({
       txServiceUrl: getTxServiceUrl(),
     }))
@@ -191,10 +181,6 @@ const AppFrame = ({ appUrl }: Props): ReactElement => {
       return tx
     })
 
-    communicator?.on(Methods.getEnvironmentInfo, async () => ({
-      origin: document.location.origin,
-    }))
-
     communicator?.on(Methods.getSafeInfo, () => ({
       safeAddress,
       // FIXME `network` is deprecated. we should find how many apps are still using it
@@ -203,7 +189,6 @@ const AppFrame = ({ appUrl }: Props): ReactElement => {
       chainId: parseInt(chainId, 10),
       owners,
       threshold,
-      isReadOnly: !granted,
     }))
 
     communicator?.on(Methods.getSafeBalances, async (msg) => {
@@ -272,8 +257,6 @@ const AppFrame = ({ appUrl }: Props): ReactElement => {
     chainId,
     chainName,
     shortName,
-    safeAppWeb3Provider,
-    granted,
   ])
 
   const onUserTxConfirm = (safeTxHash: string, requestId: RequestId) => {
@@ -305,7 +288,7 @@ const AppFrame = ({ appUrl }: Props): ReactElement => {
 
     const loadApp = async () => {
       try {
-        const app = await getAppInfoFromUrl(appUrl, false)
+        const app = await getAppInfoFromUrl(appUrl)
         setSafeApp(app)
       } catch (err) {
         logError(Errors._900, `${appUrl}, ${err.message}`)
@@ -324,7 +307,6 @@ const AppFrame = ({ appUrl }: Props): ReactElement => {
 
   return (
     <AppWrapper>
-      {thirdPartyCookiesDisabled && <ThirdPartyCookiesWarning onClose={() => setThirdPartyCookiesDisabled(false)} />}
       <StyledCard>
         {appIsLoading && (
           <LoadingContainer style={{ flexDirection: 'column' }}>
@@ -341,7 +323,6 @@ const AppFrame = ({ appUrl }: Props): ReactElement => {
           src={appUrl}
           title={safeApp.name}
           onLoad={onIframeLoad}
-          allow="camera"
         />
       </StyledCard>
 

@@ -11,6 +11,11 @@ import { grantedSelector } from 'src/routes/safe/container/selector'
 import { AppReduxState } from 'src/store'
 import { TxLocationContext } from '../TxLocationProvider'
 
+export const isThresholdReached = (executionInfo: MultisigExecutionInfo): boolean => {
+  const { confirmationsSubmitted, confirmationsRequired } = executionInfo
+  return confirmationsSubmitted >= confirmationsRequired
+}
+
 export type TransactionActions = {
   canConfirm: boolean
   canConfirmThenExecute: boolean

@@ -92,7 +92,7 @@ export const CreateEditEntryModal = ({
                         name="name"
                         placeholder="Name*"
                         testId={CREATE_ENTRY_INPUT_NAME_ID}
-                        label="Name*"
+                        text="Name*"
                         type="text"
                         validate={composeValidators(required, validAddressBookName)}
                       />

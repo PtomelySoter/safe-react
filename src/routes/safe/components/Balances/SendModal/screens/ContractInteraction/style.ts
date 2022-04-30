@@ -1,4 +1,4 @@
-import { lg, md, sm } from 'src/theme/variables'
+import { lg, md, sm, border } from 'src/theme/variables'
 import { createStyles } from '@material-ui/core'
 
 export const styles = createStyles({
@@ -13,12 +13,15 @@ export const styles = createStyles({
     marginLeft: sm,
   },
   outerData: {
+    borderRadius: '5px',
+    border: `1px solid ${border}`,
+    padding: '11px',
     minHeight: '21px',
   },
   data: {
     wordBreak: 'break-all',
     overflow: 'auto',
-    fontSize: '16px',
+    fontSize: '14px',
     fontFamily: 'Averta',
     maxHeight: '100px',
     letterSpacing: 'normal',

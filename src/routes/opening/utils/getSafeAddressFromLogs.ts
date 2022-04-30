@@ -6,10 +6,16 @@ import { checksumAddress } from 'src/utils/checksumAddress'
 import { LATEST_SAFE_VERSION } from 'src/utils/constants'
 
 // Init abiDecoder with ProxyCreation ABI
+// abiDecoder.addABI(
+//   getProxyFactoryDeployment({
+//     version: LATEST_SAFE_VERSION,
+//   })?.abi,
+// )
+
+import ProxyFactoryABI from 'src/artifacts/proxies/GnosisSafeProxyFactory.sol/GnosisSafeProxyFactory.json'
+
 abiDecoder.addABI(
-  getProxyFactoryDeployment({
-    version: LATEST_SAFE_VERSION,
-  })?.abi,
+  ProxyFactoryABI.abi,
 )
 
 export const getNewSafeAddressFromLogs = (logs: Log[]): string => {

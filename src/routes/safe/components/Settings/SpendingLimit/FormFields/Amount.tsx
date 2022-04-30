@@ -1,3 +1,4 @@
+import { TextField as SRCTextField } from '@gnosis.pm/safe-react-components'
 import { ReactElement } from 'react'
 import { useField } from 'react-final-form'
 import { useSelector } from 'react-redux'
@@ -7,14 +8,18 @@ import GnoField from 'src/components/forms/Field'
 import { composeValidators, minValue, mustBeFloat, required } from 'src/components/forms/validator'
 import { extendedSafeTokensSelector } from 'src/routes/safe/container/selector'
 import { useStyles } from 'src/routes/safe/components/Settings/SpendingLimit/style'
-import TextField from 'src/components/forms/TextField'
 
 export const Field = styled(GnoField)`
+  margin: 8px 0;
   width: 100%;
 `
 
 const AmountInput = styled.div`
   grid-area: amountInput;
+`
+
+const TextField = styled(SRCTextField)`
+  margin: 0;
 `
 
 const Amount = (): ReactElement => {

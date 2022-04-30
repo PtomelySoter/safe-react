@@ -1,21 +1,14 @@
-import { MultisigTransactionRequest, proposeTransaction, TransactionDetails } from '@gnosis.pm/safe-react-gateway-sdk'
-
 import { GnosisSafe } from 'src/types/contracts/gnosis_safe.d'
 import { _getChainId } from 'src/config'
 
 import { checksumAddress } from 'src/utils/checksumAddress'
+import { proposeTransaction, TransactionDetails } from '@gnosis.pm/safe-react-gateway-sdk'
 import { GATEWAY_URL } from 'src/utils/constants'
-import { TxArgs } from '../store/models/types/transaction'
 
-type ProposeTxBody = Omit<MultisigTransactionRequest, 'safeTxHash'> & {
-  safeInstance: GnosisSafe
-  data: string | number[]
-}
-
-const calculateBodyFrom = async ({
-  safeInstance,
+const calculateBodyFrom = async (
+  safeInstance: GnosisSafe,
   to,
-  value,
+  valueInWei,
   data,
   operation,
   nonce,
@@ -27,14 +20,14 @@ const calculateBodyFrom = async ({
   sender,
   origin,
   signature,
-}: ProposeTxBody): Promise<MultisigTransactionRequest> => {
+) => {
   const safeTxHash = await safeInstance.methods
-    .getTransactionHash(to, value, data, operation, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver || '', nonce)
+    .getTransactionHash(to, valueInWei, data, operation, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver, nonce)
     .call()
 
   return {
     to: checksumAddress(to),
-    value,
+    value: valueInWei,
     data,
     operation,
     nonce: nonce.toString(),
@@ -50,7 +43,10 @@ const calculateBodyFrom = async ({
   }
 }
 
-type SaveTxToHistoryTypes = TxArgs & { origin?: string | null; signature?: string }
+interface SaveTxToHistoryArgs {
+  safeInstance: GnosisSafe
+  [key: string]: any
+}
 
 export const saveTxToHistory = async ({
   baseGas,
@@ -67,24 +63,24 @@ export const saveTxToHistory = async ({
   signature,
   to,
   valueInWei,
-}: SaveTxToHistoryTypes): Promise<TransactionDetails> => {
+}: SaveTxToHistoryArgs): Promise<TransactionDetails> => {
   const address = checksumAddress(safeInstance.options.address)
-  const body = await calculateBodyFrom({
+  const body = await calculateBodyFrom(
     safeInstance,
     to,
-    value: valueInWei,
+    valueInWei,
     data,
     operation,
-    nonce: nonce.toString(),
+    nonce,
     safeTxGas,
     baseGas,
     gasPrice,
     gasToken,
     refundReceiver,
     sender,
-    origin: origin ? origin : null,
+    origin || null,
     signature,
-  })
+  )
   const txDetails = await proposeTransaction(GATEWAY_URL, _getChainId(), address, body)
   return txDetails
 }

@@ -2,11 +2,10 @@ import {
   AddressEx,
   TransactionInfo,
   Transfer,
-  TransactionTokenType,
+  TokenType,
   TransactionDetails,
   MultisigExecutionDetails,
   MultisigExecutionInfo,
-  Erc721Transfer,
 } from '@gnosis.pm/safe-react-gateway-sdk'
 import { BigNumber } from 'bignumber.js'
 import { matchPath } from 'react-router-dom'
@@ -44,17 +43,13 @@ const getAmountWithSymbol = (
   return `${txAmount} ${symbol}`
 }
 
-export const getTokenIdLabel = ({ tokenId }: Erc721Transfer): string => {
-  return tokenId ? `(#${tokenId})` : ''
-}
-
 export const getTxAmount = (txInfo?: TransactionInfo, formatted = true): string => {
   if (!txInfo || !isTransferTxInfo(txInfo)) {
     return NOT_AVAILABLE
   }
 
   switch (txInfo.transferInfo.type) {
-    case TransactionTokenType.ERC20:
+    case TokenType.ERC20:
       return getAmountWithSymbol(
         {
           decimals: `${txInfo.transferInfo.decimals ?? 0}`,
@@ -63,10 +58,10 @@ export const getTxAmount = (txInfo?: TransactionInfo, formatted = true): string 
         },
         formatted,
       )
-    case TransactionTokenType.ERC721:
+    case TokenType.ERC721:
       // simple workaround to avoid displaying unexpected values for incoming NFT transfer
-      return `1 ${txInfo.transferInfo.tokenSymbol} ${getTokenIdLabel(txInfo.transferInfo)}`
-    case TransactionTokenType.NATIVE_COIN: {
+      return `1 ${txInfo.transferInfo.tokenSymbol}`
+    case TokenType.NATIVE_COIN: {
       const nativeCurrency = getNativeCurrency()
       return getAmountWithSymbol(
         {
@@ -91,13 +86,13 @@ type txTokenData = {
 export const getTxTokenData = (txInfo: Transfer): txTokenData => {
   const nativeCurrency = getNativeCurrency()
   switch (txInfo.transferInfo.type) {
-    case TransactionTokenType.ERC20:
+    case TokenType.ERC20:
       return {
         address: txInfo.transferInfo.tokenAddress,
         value: txInfo.transferInfo.value,
         decimals: txInfo.transferInfo.decimals,
       }
-    case TransactionTokenType.ERC721:
+    case TokenType.ERC721:
       return { address: txInfo.transferInfo.tokenAddress, value: '1', decimals: 0 }
     default:
       return {
@@ -203,4 +198,4 @@ export const isDeeplinkedTx = (): boolean => {
 
 export const isAwaitingExecution = (
   txStatus: typeof LocalTransactionStatus[keyof typeof LocalTransactionStatus],
-): boolean => LocalTransactionStatus.AWAITING_EXECUTION === txStatus
+): boolean => [LocalTransactionStatus.AWAITING_EXECUTION, LocalTransactionStatus.PENDING_FAILED].includes(txStatus)

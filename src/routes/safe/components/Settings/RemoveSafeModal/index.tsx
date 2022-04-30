@@ -11,57 +11,24 @@ import Row from 'src/components/layout/Row'
 import PrefixedEthHashInfo from 'src/components/PrefixedEthHashInfo'
 import { currentSafeWithNames } from 'src/logic/safe/store/selectors'
 import removeSafe from 'src/logic/safe/store/actions/removeSafe'
-import { getChainById, getExplorerInfo } from 'src/config'
+import { getExplorerInfo } from 'src/config'
 import Col from 'src/components/layout/Col'
-import { WELCOME_ROUTE, history, SafeRouteParams, generateSafeRoute, SAFE_ROUTES } from 'src/routes/routes'
-import useLocalSafes, { LocalSafes } from 'src/logic/safe/hooks/useLocalSafes'
-import { currentChainId } from 'src/logic/config/store/selectors'
-import { useMemo } from 'react'
-import { SafeRecordProps } from 'src/logic/safe/store/models/safe'
+import { WELCOME_ROUTE, history } from 'src/routes/routes'
 
 type RemoveSafeModalProps = {
   isOpen: boolean
   onClose: () => void
 }
 
-function getNextAvailableSafe(currentChainId: string, currentSafeAddress: string, localSafes: LocalSafes) {
-  const availableSafes = Object.values(localSafes)
-    .flat()
-    .filter((safe) => safe.address !== currentSafeAddress)
-  const sameNetworkSafes = availableSafes.filter((safe) => safe.chainId === currentChainId)
-
-  if (sameNetworkSafes.length > 0) {
-    return sameNetworkSafes[0]
-  }
-}
-
-function getDestinationRoute(nextAvailableSafe: SafeRecordProps | undefined) {
-  if (!nextAvailableSafe || !nextAvailableSafe.chainId) return WELCOME_ROUTE
-
-  const { shortName } = getChainById(nextAvailableSafe.chainId)
-  const routesSlug: SafeRouteParams = {
-    shortName,
-    safeAddress: nextAvailableSafe.address,
-  }
-  return generateSafeRoute(SAFE_ROUTES.ASSETS_BALANCES, routesSlug)
-}
-
 const RemoveSafeModal = ({ isOpen, onClose }: RemoveSafeModalProps): React.ReactElement => {
   const classes = useStyles()
   const { address: safeAddress, name: safeName } = useSelector(currentSafeWithNames)
-  const curChainId = useSelector(currentChainId)
-  const localSafes = useLocalSafes()
-  const nextAvailableSafe = useMemo(
-    () => getNextAvailableSafe(curChainId, safeAddress, localSafes),
-    [curChainId, safeAddress, localSafes],
-  )
   const dispatch = useDispatch()
 
   const onRemoveSafeHandler = async () => {
-    const destination = getDestinationRoute(nextAvailableSafe)
     dispatch(removeSafe(safeAddress))
     onClose()
-    history.push(destination)
+    history.push(WELCOME_ROUTE)
   }
 
   return (

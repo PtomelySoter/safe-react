@@ -1,26 +1,29 @@
-import { WalletInitOptions, WalletModule, WalletSelectModuleOptions } from 'bnc-onboard/dist/src/interfaces'
+import { WalletInitOptions } from 'bnc-onboard/dist/src/interfaces'
 
-import { getRpcServiceUrl, getDisabledWallets, getChainById } from 'src/config'
-import { ChainId, WALLETS } from 'src/config/chain.d'
+import { getRpcServiceUrl, getDisabledWallets, _getChainId } from 'src/config'
+import { WALLETS } from 'src/config/chain.d'
 import { FORTMATIC_KEY, PORTIS_ID } from 'src/utils/constants'
-import getPairingModule from 'src/logic/wallets/pairing/module'
-import { isPairingSupported } from 'src/logic/wallets/pairing/utils'
-import getPatchedWCModule from 'src/logic/wallets/walletConnect/module'
 
-type Wallet = (WalletInitOptions | WalletModule) & {
-  desktop: boolean // Whether wallet supports desktop app
+type Wallet = WalletInitOptions & {
+  desktop: boolean
   walletName: WALLETS
 }
 
-const wallets = (chainId: ChainId): Wallet[] => {
-  // Ensure RPC matches chainId drilled from Onboard init
-  const { rpcUri } = getChainById(chainId)
-  const rpcUrl = getRpcServiceUrl(rpcUri)
+const wallets = (): Wallet[] => {
+  const rpcUrl = getRpcServiceUrl()
+  const chainId = _getChainId()
 
   return [
     { walletName: WALLETS.METAMASK, preferred: true, desktop: false },
-    // A patched version of WalletConnect is spliced in at this index
-    // { preferred: true, desktop: true }
+    {
+      walletName: WALLETS.WALLET_CONNECT,
+      preferred: true,
+      // as stated in the documentation, `infuraKey` is not mandatory if rpc is provided
+      rpc: { [chainId]: rpcUrl },
+      networkId: parseInt(chainId, 10),
+      desktop: true,
+      bridge: 'https://safe-walletconnect.gnosis.io/',
+    },
     {
       walletName: WALLETS.TREZOR,
       appUrl: 'gnosis-safe.io',
@@ -68,30 +71,14 @@ const wallets = (chainId: ChainId): Wallet[] => {
   ]
 }
 
-export const isSupportedWallet = (name: WALLETS | string): boolean => {
-  return !getDisabledWallets().some((walletName) => {
-    // walletName is config wallet name, name is the wallet module name and differ
-    return walletName.replace(/\s/g, '').toLowerCase() === name.replace(/\s/g, '').toLowerCase()
-  })
-}
-
-export const getSupportedWallets = (chainId: ChainId): WalletSelectModuleOptions['wallets'] => {
-  const supportedWallets: WalletSelectModuleOptions['wallets'] = wallets(chainId)
-    .filter(({ walletName, desktop }) => {
-      if (!isSupportedWallet(walletName)) {
-        return false
-      }
-      // Desktop vs. Web app wallet support
-      return window.isDesktop ? desktop : true
-    })
-    .map(({ desktop: _, ...rest }) => rest)
-
-  if (isSupportedWallet(WALLETS.WALLET_CONNECT)) {
-    const wc = getPatchedWCModule(chainId)
-    // Inset patched WC module at index 1
-    supportedWallets?.splice(1, 0, wc)
+export const getSupportedWallets = (): WalletInitOptions[] => {
+  if (window.isDesktop) {
+    return wallets()
+      .filter((wallet) => wallet.desktop)
+      .map(({ desktop, ...rest }) => rest)
   }
 
-  // Pairing must be 1st in list (to hide via CSS)
-  return isPairingSupported() ? [getPairingModule(chainId), ...supportedWallets] : supportedWallets
+  return wallets()
+    .map(({ desktop, ...rest }) => rest)
+    .filter((w) => !getDisabledWallets().includes(w.walletName))
 }

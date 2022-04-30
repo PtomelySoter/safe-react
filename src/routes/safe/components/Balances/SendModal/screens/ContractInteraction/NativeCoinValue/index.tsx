@@ -39,7 +39,7 @@ export const NativeCoinValue = ({ onSetMax }: NativeCoinValueProps): React.React
   return disabled ? null : (
     <>
       <Row className={classes.fullWidth} margin="xs">
-        <Paragraph color="disabled" noMargin size="md">
+        <Paragraph color="disabled" noMargin size="md" style={{ letterSpacing: '-0.5px' }}>
           Value
         </Paragraph>
         <ButtonLink
@@ -61,7 +61,7 @@ export const NativeCoinValue = ({ onSetMax }: NativeCoinValueProps): React.React
             }}
             name="value"
             placeholder="Value"
-            label="Value"
+            text="Value"
             type="text"
             validate={!disabled && composeValidators(mustBeFloat, maxValue(ethBalance))}
           />

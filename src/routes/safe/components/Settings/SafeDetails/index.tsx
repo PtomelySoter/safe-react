@@ -186,7 +186,7 @@ const SafeDetails = (): ReactElement => {
                   name="safeName"
                   placeholder="Safe name*"
                   testId={SAFE_NAME_INPUT_TEST_ID}
-                  label="Safe name*"
+                  text="Safe name*"
                   type="text"
                   validate={composeValidators(required, validAddressBookName)}
                 />

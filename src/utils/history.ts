@@ -1,13 +1,12 @@
 import { _getChainId } from 'src/config'
 import { getChains } from 'src/config/cache/chains'
 import { setChainId } from 'src/logic/config/utils'
-import { extractPrefixedSafeAddress } from 'src/routes/routes'
+import { hasPrefixedSafeAddressInUrl, extractPrefixedSafeAddress } from 'src/routes/routes'
 
 export const setChainIdFromUrl = (pathname: string): boolean => {
-  const { shortName, safeAddress } = extractPrefixedSafeAddress(pathname)
+  if (!hasPrefixedSafeAddressInUrl()) return false
 
-  if (!safeAddress) return false
-
+  const { shortName } = extractPrefixedSafeAddress(pathname)
   const chainId = getChains().find((chain) => chain.shortName === shortName)?.chainId
 
   if (chainId) {

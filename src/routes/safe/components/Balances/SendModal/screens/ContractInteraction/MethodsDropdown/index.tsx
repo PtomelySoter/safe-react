@@ -19,8 +19,6 @@ import { DropdownListTheme } from 'src/theme/mui'
 import { extractUsefulMethods, AbiItemExtended } from 'src/logic/contractInteraction/sources/ABIService'
 import { Text } from '@gnosis.pm/safe-react-components'
 import styled from 'styled-components'
-import { Button } from '@material-ui/core'
-import { useButtonStyles } from 'src/routes/safe/components/Balances/SendModal/screens/ContractInteraction/MethodsDropdown/style'
 
 const MENU_WIDTH = '452px'
 
@@ -34,7 +32,6 @@ interface MethodsDropdownProps {
 
 export const MethodsDropdown = ({ onChange }: MethodsDropdownProps): ReactElement | null => {
   const classes = useDropdownStyles({ buttonWidth: MENU_WIDTH })
-  const buttonClasses = useButtonStyles({ buttonWidth: MENU_WIDTH })
   const {
     input: { value: abi },
     meta: { valid },
@@ -82,19 +79,19 @@ export const MethodsDropdown = ({ onChange }: MethodsDropdownProps): ReactElemen
   }
 
   return (
-    <Row margin="md">
+    <Row margin="sm">
       <Col>
         <MuiThemeProvider theme={DropdownListTheme}>
           <>
-            <Button className={buttonClasses.button} onClick={handleClick} variant="outlined">
+            <button className={classes.button} onClick={handleClick} type="button">
               <StyledText
-                size="xl"
+                size="md"
                 color="placeHolder"
-                className={classNames(buttonClasses.buttonInner, anchorEl && buttonClasses.openMenuButton)}
+                className={classNames(classes.buttonInner, anchorEl && classes.openMenuButton)}
               >
                 {(selectedMethod as Record<string, string>).name || 'Method'}
               </StyledText>
-            </Button>
+            </button>
             <Menu
               anchorEl={anchorEl}
               anchorOrigin={{

@@ -5,8 +5,8 @@ import { sm } from 'src/theme/variables'
 export const useSelectedTokenStyles = makeStyles(
   createStyles({
     container: {
-      background: 'none !important',
-      padding: '0',
+      minHeight: '55px',
+      padding: 0,
       width: '100%',
     },
     tokenData: {

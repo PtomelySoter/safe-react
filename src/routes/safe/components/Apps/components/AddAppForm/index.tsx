@@ -3,6 +3,7 @@ import { useState, ReactElement, useCallback, useEffect } from 'react'
 import { useHistory } from 'react-router-dom'
 import styled from 'styled-components'
 import { SafeApp } from 'src/routes/safe/components/Apps/types'
+
 import GnoForm from 'src/components/forms/GnoForm'
 import Img from 'src/components/layout/Img'
 import { Modal } from 'src/components/Modal'
@@ -18,22 +19,6 @@ const FORM_ID = 'add-apps-form'
 const StyledTextFileAppName = styled(TextField)`
   && {
     width: 385px;
-    .MuiFormLabel-root {
-      &.Mui-disabled {
-        color: rgba(0, 0, 0, 0.54);
-        &.Mui-error {
-          color: ${(props) => props.theme.colors.error};
-        }
-      }
-    }
-    .MuiInputBase-root {
-      .MuiFilledInput-input {
-        color: rgba(0, 0, 0, 0.54);
-      }
-      &:before {
-        border-bottom-style: inset;
-      }
-    }
   }
 `
 
@@ -156,7 +141,7 @@ const AddApp = ({ appList, closeModal, onAddApp }: AddAppProps): ReactElement =>
               )}
               <StyledTextFileAppName
                 label="App name"
-                disabled
+                readOnly
                 meta={{ error: fetchError }}
                 value={isLoading ? 'Loading...' : appInfo.name === DEFAULT_APP_INFO.name ? '' : appInfo.name}
                 onChange={() => {}}

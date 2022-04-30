@@ -45,8 +45,6 @@ import { getBalanceAndDecimalsFromToken } from 'src/logic/tokens/utils/tokenHelp
 import Divider from 'src/components/Divider'
 import { Modal } from 'src/components/Modal'
 import { ModalHeader } from '../ModalHeader'
-import { isSpendingLimit } from 'src/routes/safe/components/Transactions/helpers/utils'
-import { getStepTitle } from 'src/routes/safe/components/Balances/SendModal/utils'
 
 const formMutators = {
   setMax: (args, state, utils) => {
@@ -149,7 +147,7 @@ const SendFunds = ({
     const { amount, token: tokenAddress, txType } = values ?? {}
     const tokenValidation = composeValidators(required)(tokenAddress)
 
-    const isSpendingLimitTx = tokenSpendingLimit && isSpendingLimit(txType)
+    const isSpendingLimit = tokenSpendingLimit && txType === 'spendingLimit'
     const tokenDecimals =
       (tokenAddress && Number(getBalanceAndDecimalsFromToken({ tokenAddress, tokens })?.decimals)) ||
       nativeCurrency.decimals
@@ -160,7 +158,7 @@ const SendFunds = ({
       minValue(0, false),
       tokenAddress
         ? maxValue(
-            isSpendingLimitTx
+            isSpendingLimit
               ? spendingLimitAllowedBalance({ tokenAddress, tokenSpendingLimit, tokens })
               : getBalanceAndDecimalsFromToken({ tokenAddress, tokens })?.balance ?? 0,
           )
@@ -175,7 +173,7 @@ const SendFunds = ({
 
   return (
     <>
-      <ModalHeader onClose={onClose} subTitle={getStepTitle(1, 2)} title="Send funds" />
+      <ModalHeader onClose={onClose} subTitle="1 of 2" title="Send funds" />
       <Hairline />
       <GnoForm
         formMutators={formMutators}
@@ -227,10 +225,10 @@ const SendFunds = ({
           }
 
           const setMaxAllowedAmount = () => {
-            const isSpendingLimitTx = tokenSpendingLimit && isSpendingLimit(txType)
+            const isSpendingLimit = tokenSpendingLimit && txType === 'spendingLimit'
             let maxAmount = selectedToken?.balance.tokenBalance ?? 0
 
-            if (isSpendingLimitTx) {
+            if (isSpendingLimit) {
               const spendingLimitBalance = fromTokenUnit(
                 new BigNumber(tokenSpendingLimit.amount).minus(tokenSpendingLimit.spent).toString(),
                 selectedToken?.decimals ?? 0,
@@ -245,7 +243,7 @@ const SendFunds = ({
           return (
             <>
               <Block className={classes.formContainer}>
-                <SafeInfo text="Sending from" />
+                <SafeInfo />
                 <Divider withArrow />
                 {selectedEntry && selectedEntry.address ? (
                   <div
@@ -261,8 +259,8 @@ const SendFunds = ({
                     role="listbox"
                     tabIndex={0}
                   >
-                    <Row margin="sm">
-                      <Paragraph color="disabled" noMargin size="lg">
+                    <Row margin="xs">
+                      <Paragraph color="disabled" noMargin size="md" style={{ letterSpacing: '-0.5px' }}>
                         Recipient
                       </Paragraph>
                     </Row>
@@ -270,7 +268,6 @@ const SendFunds = ({
                       <PrefixedEthHashInfo
                         hash={selectedEntry.address}
                         name={selectedEntry.name}
-                        strongName
                         showAvatar
                         showCopyBtn
                         explorerUrl={getExplorerInfo(selectedEntry.address)}
@@ -293,7 +290,7 @@ const SendFunds = ({
                     </Col>
                   </Row>
                 )}
-                <Row margin="md">
+                <Row margin="sm">
                   <Col>
                     <TokenSelectField
                       initialValue={selectedToken?.address}
@@ -307,7 +304,7 @@ const SendFunds = ({
                 )}
                 <Row margin="xs">
                   <Col between="lg">
-                    <Paragraph color="disabled" noMargin size="md">
+                    <Paragraph color="disabled" noMargin size="md" style={{ letterSpacing: '-0.5px' }}>
                       Amount
                     </Paragraph>
                     <ButtonLink onClick={setMaxAllowedAmount} weight="bold" testId="send-max-btn">
@@ -328,6 +325,7 @@ const SendFunds = ({
                       }}
                       name="amount"
                       placeholder="Amount*"
+                      text="Amount*"
                       type="text"
                       testId="amount-input"
                     />

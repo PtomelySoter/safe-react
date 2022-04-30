@@ -5,7 +5,6 @@ import { ReactElement } from 'react'
 import { useSelector } from 'react-redux'
 
 import Button from 'src/components/layout/Button'
-import { NFTToken } from 'src/logic/collectibles/sources/collectibles'
 import { grantedSelector } from 'src/routes/safe/container/selector'
 import { fontColor, sm, xs } from 'src/theme/variables'
 
@@ -53,14 +52,14 @@ const useStyles = makeStyles({
     zIndex: '5',
   },
   image: {
+    backgroundColor: (props) => `#${props.backgroundColor}` || '#f0efee',
+    backgroundPosition: '50% 50%',
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: 'contain',
     borderRadius: '8px',
-    maxWidth: '200px',
-    maxHeight: '200px',
+    height: '178px',
+    flexGrow: '1',
     width: '100%',
-    height: '100%',
-    objectFit: 'contain',
-    margin: '12px 12px 0',
-    alignSelf: 'center',
   },
   textContainer: {
     boxSizing: 'border-box',
@@ -99,14 +98,14 @@ const useStyles = makeStyles({
   },
 } as any)
 
-const Item = ({ data, onSend }: { data: NFTToken; onSend: (nftToken: NFTToken) => void }): ReactElement => {
+const Item = ({ data, onSend }): ReactElement => {
   const granted = useSelector(grantedSelector)
-  const classes = useStyles({ granted })
+  const classes = useStyles({ backgroundColor: data.color, granted })
 
   return (
     <div className={classes.item}>
       <div className={classes.mainContent}>
-        <img src={data.image} className={classes.image} loading="lazy" />
+        <div className={classes.image} style={{ backgroundImage: `url(${data.image})` }} />
         <div className={classes.textContainer}>
           {data.name && (
             <h3 className={classes.title} title={data.name}>

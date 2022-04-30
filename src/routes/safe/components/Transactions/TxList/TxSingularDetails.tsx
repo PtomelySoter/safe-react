@@ -1,5 +1,5 @@
 import { ReactElement, useEffect, useState } from 'react'
-import { useHistory, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { Loader } from '@gnosis.pm/safe-react-components'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { TransactionDetails } from '@gnosis.pm/safe-react-gateway-sdk'
@@ -12,6 +12,7 @@ import {
   SafeRouteSlugs,
   SAFE_ROUTES,
   TRANSACTION_ID_SLUG,
+  history,
 } from 'src/routes/routes'
 import { Centered } from './styled'
 import { getTransactionWithLocationByAttribute } from 'src/logic/safe/store/selectors/gatewayTransactions'
@@ -29,15 +30,12 @@ import { Transaction } from 'src/logic/safe/store/models/types/gateway.d'
 import { currentChainId } from 'src/logic/config/store/selectors'
 import { QueueTxList } from './QueueTxList'
 import { HistoryTxList } from './HistoryTxList'
-import FetchError from '../../FetchError'
 
 const TxSingularDetails = (): ReactElement => {
   const { [TRANSACTION_ID_SLUG]: safeTxHash = '' } = useParams<SafeRouteSlugs>()
   const [fetchedTx, setFetchedTx] = useState<TransactionDetails>()
   const [liveTx, setLiveTx] = useState<{ txLocation: TxLocation; transaction: Transaction }>()
-  const [error, setError] = useState<Error>()
   const dispatch = useDispatch()
-  const history = useHistory()
   const chainId = useSelector(currentChainId)
 
   // We must use the tx from the store as the queue actions alter the tx
@@ -78,7 +76,6 @@ const TxSingularDetails = (): ReactElement => {
         txDetails = await fetchSafeTransaction(safeTxHash)
       } catch (e) {
         logError(Errors._614, e.message)
-        setError(e)
         return
       }
 
@@ -92,7 +89,7 @@ const TxSingularDetails = (): ReactElement => {
     return () => {
       isCurrent = false
     }
-  }, [history, safeTxHash, setFetchedTx, setLiveTx])
+  }, [safeTxHash, setFetchedTx, setLiveTx])
 
   // Add the tx to the store
   useEffect(() => {
@@ -114,17 +111,6 @@ const TxSingularDetails = (): ReactElement => {
     // And add it to the corresponding list in the store
     dispatch(isTxQueued(listItemTx.txStatus) ? addQueuedTransactions(payload) : addHistoryTransactions(payload))
   }, [fetchedTx, chainId, dispatch])
-
-  if (!liveTx && error) {
-    const safeParams = extractPrefixedSafeAddress()
-    return (
-      <FetchError
-        text="Transaction not found"
-        buttonText="See all transactions"
-        redirectRoute={generateSafeRoute(SAFE_ROUTES.TRANSACTIONS, safeParams)}
-      />
-    )
-  }
 
   if (!liveTx) {
     return (

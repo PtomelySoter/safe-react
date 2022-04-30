@@ -3,7 +3,7 @@ import {
   getSafeSingletonDeployment,
   getSafeL2SingletonDeployment,
   getProxyFactoryDeployment,
-  getFallbackHandlerDeployment,
+  getFallbackHandlerDeployment, 
   getMultiSendCallOnlyDeployment,
   getSignMessageLibDeployment,
 } from '@gnosis.pm/safe-deployments'
@@ -22,6 +22,12 @@ import { CompatibilityFallbackHandler } from 'src/types/contracts/compatibility_
 import { SignMessageLib } from 'src/types/contracts/sign_message_lib.d'
 import { MultiSend } from 'src/types/contracts/multi_send.d'
 import { getSafeInfo } from 'src/logic/safe/utils/safeInformation'
+
+import GnosisSafeL2ABI from 'src/artifacts/GnosisSafeL2.sol/GnosisSafeL2.json'
+import ProxyFactoryABI from 'src/artifacts/proxies/GnosisSafeProxyFactory.sol/GnosisSafeProxyFactory.json'
+import FallBackHandlerABI from 'src/artifacts/handler/CompatibilityFallbackHandler.sol/CompatibilityFallbackHandler.json'
+import MultiSendDeploymentABI from 'src/artifacts/libraries/MultiSend.sol/MultiSend.json'
+import SignMessageLibABI from 'src/artifacts/libraries/SignMessageLib.sol/SignMessageLib.json'
 
 export const SENTINEL_ADDRESS = '0x0000000000000000000000000000000000000001'
 
@@ -64,13 +70,13 @@ const getSafeContractDeployment = ({ safeVersion }: { safeVersion: string }) => 
  */
 const getGnosisSafeContractInstance = (web3: Web3, chainId: ChainId): GnosisSafe => {
   const safeSingletonDeployment = getSafeContractDeployment({ safeVersion: LATEST_SAFE_VERSION })
-  const contractAddress = safeSingletonDeployment?.networkAddresses[chainId]
+  const contractAddress = process.env.REACT_APP_GnosisSafeL2;
 
   if (!contractAddress) {
     throw new Error(`GnosisSafe contract not found for chainId: ${chainId}`)
   }
 
-  return new web3.eth.Contract(safeSingletonDeployment?.abi as AbiItem[], contractAddress) as unknown as GnosisSafe
+  return new web3.eth.Contract(GnosisSafeL2ABI.abi as AbiItem[], contractAddress) as unknown as GnosisSafe
 }
 
 /**
@@ -87,13 +93,13 @@ const getProxyFactoryContractInstance = (web3: Web3, chainId: ChainId): ProxyFac
     getProxyFactoryDeployment({
       version: LATEST_SAFE_VERSION,
     })
-  const contractAddress = proxyFactoryDeployment?.networkAddresses[chainId]
+  const contractAddress = process.env.REACT_APP_GnosisSafeProxyFactory;
 
   if (!contractAddress) {
     throw new Error(`GnosisSafeProxyFactory contract not found for chainId: ${chainId}`)
   }
 
-  return new web3.eth.Contract(proxyFactoryDeployment?.abi as AbiItem[], contractAddress) as unknown as ProxyFactory
+  return new web3.eth.Contract(ProxyFactoryABI.abi as AbiItem[], contractAddress) as unknown as ProxyFactory
 }
 
 /**
@@ -110,14 +116,14 @@ const getFallbackHandlerContractInstance = (web3: Web3, chainId: ChainId): Compa
     getFallbackHandlerDeployment({
       version: LATEST_SAFE_VERSION,
     })
-  const contractAddress = fallbackHandlerDeployment?.networkAddresses[chainId]
+  const contractAddress = process.env.REACT_APP_CompatibilityFallbackHandler;
 
   if (!contractAddress) {
     throw new Error(`FallbackHandler contract not found for chainId: ${chainId}`)
   }
 
   return new web3.eth.Contract(
-    fallbackHandlerDeployment?.abi as AbiItem[],
+    FallBackHandlerABI.abi as AbiItem[],
     contractAddress,
   ) as unknown as CompatibilityFallbackHandler
 }
@@ -132,13 +138,13 @@ const getMultiSendContractInstance = (web3: Web3, chainId: ChainId): MultiSend =
     getMultiSendCallOnlyDeployment({
       network: chainId.toString(),
     }) || getMultiSendCallOnlyDeployment()
-  const contractAddress = multiSendDeployment?.networkAddresses[chainId]
+  const contractAddress = process.env.REACT_APP_MultiSend;
 
   if (!contractAddress) {
     throw new Error(`MultiSend contract not found for chainId: ${chainId}`)
   }
 
-  return new web3.eth.Contract(multiSendDeployment?.abi as AbiItem[], contractAddress) as unknown as MultiSend
+  return new web3.eth.Contract(MultiSendDeploymentABI.abi as AbiItem[], contractAddress) as unknown as MultiSend
 }
 
 /**
@@ -151,7 +157,7 @@ export const getSignMessageLibAddress = (chainId: ChainId): string | undefined =
     getSignMessageLibDeployment({
       network: chainId.toString(),
     }) || getSignMessageLibDeployment()
-  const contractAddress = signMessageLibDeployment?.networkAddresses[chainId]
+  const contractAddress = process.env.REACT_APP_SignMessageLib;
 
   if (!contractAddress) {
     throw new Error(`SignMessageLib contract not found for chainId: ${chainId}`)
@@ -171,13 +177,13 @@ export const getSignMessageLibContractInstance = (web3: Web3, chainId: ChainId):
     getSignMessageLibDeployment({
       network: chainId.toString(),
     }) || getSignMessageLibDeployment()
-  const contractAddress = signMessageLibDeployment?.networkAddresses[chainId]
+  const contractAddress = process.env.REACT_APP_SignMessageLib;
 
   if (!contractAddress) {
     throw new Error(`SignMessageLib contract not found for chainId: ${chainId}`)
   }
 
-  return new web3.eth.Contract(signMessageLibDeployment?.abi as AbiItem[], contractAddress) as unknown as SignMessageLib
+  return new web3.eth.Contract(SignMessageLibABI.abi as AbiItem[], contractAddress) as unknown as SignMessageLib
 }
 
 export const getMasterCopyAddressFromProxyAddress = async (proxyAddress: string): Promise<string | undefined> => {

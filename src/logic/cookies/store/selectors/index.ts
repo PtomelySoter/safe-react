@@ -1,4 +1,3 @@
-import { CookieState, COOKIES_REDUCER_ID } from 'src/logic/cookies/store/reducer/cookies'
-import { AppReduxState } from 'src/store'
+import { COOKIES_REDUCER_ID } from 'src/logic/cookies/store/reducer/cookies'
 
-export const cookieBannerState = (state: AppReduxState): CookieState => state[COOKIES_REDUCER_ID]
+export const cookieBannerOpen = (state) => state[COOKIES_REDUCER_ID].get('cookieBannerOpen')

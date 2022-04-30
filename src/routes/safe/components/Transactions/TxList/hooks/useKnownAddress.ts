@@ -10,9 +10,7 @@ const DEFAULT_PROPS: AddressEx = {
   name: null,
   logoUri: null,
 }
-
-export type KnownAddressType = AddressEx & { isInAddressBook: boolean }
-export const useKnownAddress = (props: AddressEx | null = DEFAULT_PROPS): KnownAddressType => {
+export const useKnownAddress = (props: AddressEx | null = DEFAULT_PROPS): AddressEx & { isInAddressBook: boolean } => {
   const recipientName = useSelector((state) => addressBookEntryName(state, { address: props?.value || '' }))
 
   // Undefined known address

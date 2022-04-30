@@ -1,58 +1,53 @@
-import { lazy, ReactElement } from 'react'
 import { withStyles } from '@material-ui/core/styles'
-import { Card } from '@gnosis.pm/safe-react-components'
-import styled from 'styled-components'
+import { ReactElement } from 'react'
 
 import ConnectButton from 'src/components/ConnectButton'
+
 import Block from 'src/components/layout/Block'
 import Paragraph from 'src/components/layout/Paragraph'
 import Row from 'src/components/layout/Row'
 import { KeyRing } from 'src/components/AppLayout/Header/components/KeyRing'
-import { isPairingSupported } from 'src/logic/wallets/pairing/utils'
-import { wrapInSuspense } from 'src/utils/wrapInSuspense'
-const PairingDetails = lazy(() => import('src/components/AppLayout/Header/components/ProviderDetails/PairingDetails'))
+import { Card } from '@gnosis.pm/safe-react-components'
+import styled from 'styled-components'
 
 const styles = () => ({
-  header: {
-    letterSpacing: '0.4px',
-    flexGrow: 1,
-    textAlign: 'center',
-    fontWeight: 600,
-    fontSize: '18px',
-  },
-  centerText: {
-    textAlign: 'center',
-  },
-  justifyCenter: {
+  logo: {
     justifyContent: 'center',
   },
-  appStore: {
-    height: '35px',
+  text: {
+    letterSpacing: '-0.6px',
+    flexGrow: 1,
+    textAlign: 'center',
+  },
+  connect: {
+    textAlign: 'center',
+    marginTop: '60px',
+  },
+  connectText: {
+    letterSpacing: '1px',
+  },
+  img: {
+    margin: '0px 2px',
   },
 })
 
 const StyledCard = styled(Card)`
   padding: 20px;
-  max-width: 240px;
 `
-
 const ConnectDetails = ({ classes }): ReactElement => (
   <StyledCard>
     <Row align="center" margin="lg">
-      <Paragraph className={classes.header} noMargin>
+      <Paragraph className={classes.text} noMargin size="xl" weight="bolder">
         Connect a Wallet
       </Paragraph>
     </Row>
 
-    <Row className={classes.justifyCenter} margin="lg">
+    <Row className={classes.logo}>
       <KeyRing center circleSize={60} dotRight={20} dotSize={20} dotTop={50} keySize={28} mode="error" />
     </Row>
-
-    <Block className={classes.centerText}>
+    <Block className={classes.connect}>
       <ConnectButton data-testid="heading-connect-btn" />
     </Block>
-
-    {isPairingSupported() && wrapInSuspense(<PairingDetails classes={classes} />)}
   </StyledCard>
 )
 

@@ -10,7 +10,7 @@ export const useStyles = makeStyles(
       height: '74px',
     },
     manage: {
-      fontSize: '20px',
+      fontSize: lg,
       marginTop: `${xs}`,
     },
     disclaimer: {
@@ -23,8 +23,8 @@ export const useStyles = makeStyles(
       marginBottom: `${md}`,
     },
     closeIcon: {
-      height: '24px',
-      width: '24px',
+      height: '35px',
+      width: '35px',
     },
     buttonColumn: {
       margin: '52px 0 44px 0',

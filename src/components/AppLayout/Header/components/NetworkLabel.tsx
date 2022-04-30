@@ -41,7 +41,7 @@ const NetworkLabel = ({
 
   return (
     <StyledCol middle="xs" start="xs" onClick={onClick}>
-      <StyledParagraph size="xs" $theme={chain.theme} className="networkLabel">
+      <StyledParagraph size="xs" $theme={chain.theme}>
         {chain.chainName}
       </StyledParagraph>
     </StyledCol>

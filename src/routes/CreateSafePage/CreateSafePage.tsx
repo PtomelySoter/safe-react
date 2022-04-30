@@ -1,10 +1,10 @@
-import { ReactElement, useEffect, useState } from 'react'
+import { ReactElement, useState, useEffect } from 'react'
 import IconButton from '@material-ui/core/IconButton'
 import ChevronLeft from '@material-ui/icons/ChevronLeft'
 import styled from 'styled-components'
 import { useSelector } from 'react-redux'
 import queryString from 'query-string'
-import { useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router'
 import { Loader } from '@gnosis.pm/safe-react-components'
 
 import Page from 'src/components/layout/Page'
@@ -12,7 +12,7 @@ import Block from 'src/components/layout/Block'
 import Row from 'src/components/layout/Row'
 import Heading from 'src/components/layout/Heading'
 import { history } from 'src/routes/routes'
-import { secondary, sm } from 'src/theme/variables'
+import { sm, secondary } from 'src/theme/variables'
 import StepperForm, { StepFormElement } from 'src/components/StepperForm/StepperForm'
 import NameNewSafeStep, { nameNewSafeStepLabel } from './steps/NameNewSafeStep'
 import {
@@ -22,7 +22,6 @@ import {
   FIELD_MAX_OWNER_NUMBER,
   FIELD_NEW_SAFE_PROXY_SALT,
   FIELD_NEW_SAFE_THRESHOLD,
-  FIELD_SAFE_OWNER_ENS_LIST,
   FIELD_SAFE_OWNERS_LIST,
   SAFE_PENDING_CREATION_STORAGE_KEY,
 } from './fields/createSafeFields'
@@ -30,13 +29,13 @@ import { useMnemonicSafeName } from 'src/logic/hooks/useMnemonicName'
 import { providerNameSelector, shouldSwitchWalletChain, userAccountSelector } from 'src/logic/wallets/store/selectors'
 import OwnersAndConfirmationsNewSafeStep, {
   ownersAndConfirmationsNewSafeStepLabel,
+  ownersAndConfirmationsNewSafeStepValidations,
 } from './steps/OwnersAndConfirmationsNewSafeStep'
 import { currentNetworkAddressBookAsMap } from 'src/logic/addressBook/store/selectors'
 import ReviewNewSafeStep, { reviewNewSafeStepLabel } from './steps/ReviewNewSafeStep'
 import { loadFromStorage, saveToStorage } from 'src/utils/storage'
 import SafeCreationProcess from './components/SafeCreationProcess'
 import SelectWalletAndNetworkStep, { selectWalletAndNetworkStepLabel } from './steps/SelectWalletAndNetworkStep'
-import { reverseENSLookup } from 'src/logic/wallets/getWeb3'
 
 function CreateSafePage(): ReactElement {
   const [safePendingToBeCreated, setSafePendingToBeCreated] = useState<CreateSafeFormValues>()
@@ -76,18 +75,9 @@ function CreateSafePage(): ReactElement {
   const [initialFormValues, setInitialFormValues] = useState<CreateSafeFormValues>()
 
   useEffect(() => {
-    let isCurrent = true
     if (provider && userWalletAddress) {
-      const getInitValues = async () => {
-        const initialValuesFromUrl = await getInitialValues(userWalletAddress, addressBook, location, safeRandomName)
-        if (isCurrent) {
-          setInitialFormValues(initialValuesFromUrl)
-        }
-      }
-      getInitValues()
-    }
-    return () => {
-      isCurrent = false
+      const initialValuesFromUrl = getInitialValues(userWalletAddress, addressBook, location, safeRandomName)
+      setInitialFormValues(initialValuesFromUrl)
     }
   }, [provider, userWalletAddress, addressBook, location, safeRandomName])
 
@@ -98,8 +88,6 @@ function CreateSafePage(): ReactElement {
       </LoaderContainer>
     )
   }
-
-  const isInitializing = !provider || !initialFormValues
 
   return !!safePendingToBeCreated ? (
     <SafeCreationProcess />
@@ -116,14 +104,18 @@ function CreateSafePage(): ReactElement {
           <StepFormElement
             label={selectWalletAndNetworkStepLabel}
             nextButtonLabel="Continue"
-            disableNextButton={isInitializing}
+            disableNextButton={!provider}
           >
             <SelectWalletAndNetworkStep />
           </StepFormElement>
           <StepFormElement label={nameNewSafeStepLabel} nextButtonLabel="Continue">
             <NameNewSafeStep />
           </StepFormElement>
-          <StepFormElement label={ownersAndConfirmationsNewSafeStepLabel} nextButtonLabel="Continue">
+          <StepFormElement
+            label={ownersAndConfirmationsNewSafeStepLabel}
+            nextButtonLabel="Continue"
+            validate={ownersAndConfirmationsNewSafeStepValidations}
+          >
             <OwnersAndConfirmationsNewSafeStep />
           </StepFormElement>
           <StepFormElement label={reviewNewSafeStepLabel} nextButtonLabel="Create">
@@ -140,7 +132,7 @@ export default CreateSafePage
 const DEFAULT_THRESHOLD_VALUE = 1
 
 // initial values can be present in the URL because the Old MultiSig migration
-async function getInitialValues(userAddress, addressBook, location, suggestedSafeName): Promise<CreateSafeFormValues> {
+function getInitialValues(userAddress, addressBook, location, suggestedSafeName): CreateSafeFormValues {
   const query = queryString.parse(location.search, { arrayFormat: 'comma' })
   const { name, owneraddresses, ownernames, threshold } = query
 
@@ -151,7 +143,7 @@ async function getInitialValues(userAddress, addressBook, location, suggestedSaf
 
   // we set the owner names
   const ownersNamesFromUrl = Array.isArray(ownernames) ? ownernames : [ownernames]
-  const userAddressName = [addressBook[userAddress]?.name || '']
+  const userAddressName = [addressBook[userAddress]?.name || 'My Wallet']
   const ownerNames = isOwnersPresentInTheUrl ? ownersNamesFromUrl : userAddressName
 
   const thresholdFromURl = Number(threshold)
@@ -166,15 +158,6 @@ async function getInitialValues(userAddress, addressBook, location, suggestedSaf
       nameFieldName: `owner-name-${index}`,
       addressFieldName: `owner-address-${index}`,
     })),
-    [FIELD_SAFE_OWNER_ENS_LIST]: (
-      await Promise.all(
-        owners.map(async (address) => {
-          return { [address]: await reverseENSLookup(address) }
-        }),
-      )
-    ).reduce((acc, owner) => {
-      return { ...acc, ...owner }
-    }, {}),
     // we set owners address values as owner-address-${index} format in the form state
     ...owners.reduce(
       (ownerAddressFields, ownerAddress, index) => ({

@@ -15,7 +15,7 @@ import { TxHoverContext } from 'src/routes/safe/components/Transactions/TxList/T
 import { TxLocationContext } from 'src/routes/safe/components/Transactions/TxList/TxLocationProvider'
 import enqueueSnackbar from 'src/logic/notifications/store/actions/enqueueSnackbar'
 import { NOTIFICATIONS } from 'src/logic/notifications'
-import useTxStatus from 'src/logic/hooks/useTxStatus'
+import useLocalTxStatus from 'src/logic/hooks/useLocalTxStatus'
 
 type ActionButtonsHandlers = {
   canCancel: boolean
@@ -34,7 +34,7 @@ export const useActionButtonsHandlers = (transaction: Transaction): ActionButton
   const locationContext = useContext(TxLocationContext)
   const dispatch = useDispatch()
   const { canCancel, canConfirmThenExecute, canExecute } = useTransactionActions(transaction)
-  const txStatus = useTxStatus(transaction)
+  const txStatus = useLocalTxStatus(transaction)
   const isPending = txStatus === LocalTransactionStatus.PENDING
 
   const handleConfirmButtonClick = useCallback(

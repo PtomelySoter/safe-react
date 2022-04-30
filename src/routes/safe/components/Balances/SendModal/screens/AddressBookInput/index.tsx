@@ -169,7 +169,7 @@ const BaseAddressBookInput = ({
           autoFocus={true}
           error={!!validationText}
           fullWidth
-          variant="outlined"
+          variant="filled"
           label={validationText ? validationText : label}
           InputLabelProps={{ shrink: true, required: true, classes: labelStyles }}
           InputProps={{ ...params.InputProps, classes: inputStyles }}

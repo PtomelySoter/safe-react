@@ -21,7 +21,6 @@ import { getNativeCurrency } from 'src/config'
 import { sameString } from 'src/utils/strings'
 import { fetchSafeTokens } from 'src/logic/tokens/store/actions/fetchSafeTokens'
 import { currentSafe } from 'src/logic/safe/store/selectors'
-import { Button } from '@material-ui/core'
 
 export const CurrencyDropdown = ({ testId }: { testId: string }): React.ReactElement | null => {
   const dispatch = useDispatch()
@@ -46,9 +45,9 @@ export const CurrencyDropdown = ({ testId }: { testId: string }): React.ReactEle
     setAnchorEl(null)
   }
 
-  const onCurrentCurrencyChangedHandler = (newCurrencySelectedName: string): void => {
+  const onCurrentCurrencyChangedHandler = async (newCurrencySelectedName: string): Promise<void> => {
     handleClose()
-    dispatch(fetchSafeTokens(address, newCurrencySelectedName))
+    await dispatch(fetchSafeTokens(address, newCurrencySelectedName))
     dispatch(setSelectedCurrency({ selectedCurrency: newCurrencySelectedName }))
   }
 
@@ -59,17 +58,11 @@ export const CurrencyDropdown = ({ testId }: { testId: string }): React.ReactEle
   return (
     <MuiThemeProvider theme={DropdownListTheme}>
       <>
-        <Button
-          className={classes.button}
-          onClick={handleClick}
-          type="button"
-          variant="outlined"
-          data-testid={`${testId}-btn`}
-        >
+        <button className={classes.button} onClick={handleClick} type="button" data-testid={`${testId}-btn`}>
           <span className={classNames(classes.buttonInner, anchorEl && classes.openMenuButton)}>
             {selectedCurrency}
           </span>
-        </Button>
+        </button>
         <Menu
           anchorEl={anchorEl}
           anchorOrigin={{

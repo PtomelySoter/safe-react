@@ -43,7 +43,6 @@ jest.mock('@gnosis.pm/safe-react-gateway-sdk', () => {
     ...originalModule,
     Operation: jest.fn(),
     TokenType: jest.fn(),
-    TransactionTokenType: jest.fn(),
     TransactionStatus: jest.fn(),
     TransferDirection: jest.fn(),
     getBalances: jest.fn(),

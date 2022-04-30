@@ -55,7 +55,6 @@ export const useDropdownStyles = makeStyles({
     boxSizing: 'border-box',
     display: 'block',
     height: '100%',
-    fontSize: '12px',
     lineHeight: '24px',
     padding: '0 22px 0 8px',
     position: 'relative',

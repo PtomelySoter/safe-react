@@ -1,15 +1,9 @@
-import {
-  Custom,
-  SettingsChange,
-  TransactionInfo,
-  Transfer,
-  TransactionTokenType,
-} from '@gnosis.pm/safe-react-gateway-sdk'
+import { Custom, SettingsChange, TransactionInfo, Transfer, TokenType } from '@gnosis.pm/safe-react-gateway-sdk'
 import { useEffect, useState } from 'react'
 
 import { getNativeCurrency } from 'src/config'
 import { isCustomTxInfo, isSettingsChangeTxInfo, isTransferTxInfo } from 'src/logic/safe/store/models/types/gateway.d'
-import { getTokenIdLabel, getTxAmount, NOT_AVAILABLE } from 'src/routes/safe/components/Transactions/TxList/utils'
+import { getTxAmount, NOT_AVAILABLE } from 'src/routes/safe/components/Transactions/TxList/utils'
 
 export type TokenTransferAsset = {
   type: 'Transfer'
@@ -45,7 +39,7 @@ export const useAssetInfo = (txInfo: TransactionInfo): AssetInfo | undefined => 
       const directionSign = direction === 'INCOMING' ? '+' : '-'
 
       switch (transferInfo.type) {
-        case TransactionTokenType.ERC20: {
+        case TokenType.ERC20: {
           setAsset({
             type: 'Transfer',
             name: transferInfo.tokenName ?? defaultTokenTransferAsset.name,
@@ -56,10 +50,10 @@ export const useAssetInfo = (txInfo: TransactionInfo): AssetInfo | undefined => 
           })
           break
         }
-        case TransactionTokenType.ERC721: {
+        case TokenType.ERC721: {
           setAsset({
             type: 'Transfer',
-            name: `${transferInfo.tokenName ?? defaultTokenTransferAsset.name} ${getTokenIdLabel(transferInfo)}`,
+            name: transferInfo.tokenName ?? defaultTokenTransferAsset.name,
             logoUri: transferInfo.logoUri ?? defaultTokenTransferAsset.logoUri,
             directionSign: directionSign,
             amountWithSymbol,
@@ -67,7 +61,7 @@ export const useAssetInfo = (txInfo: TransactionInfo): AssetInfo | undefined => 
           })
           break
         }
-        case TransactionTokenType.NATIVE_COIN: {
+        case TokenType.NATIVE_COIN: {
           const nativeCurrency = getNativeCurrency()
 
           setAsset({

@@ -1,17 +1,16 @@
 import { List } from 'immutable'
-import { FEATURES } from '@gnosis.pm/safe-react-gateway-sdk'
 
 import { getGnosisSafeInstanceAt } from 'src/logic/contracts/safeContracts'
 import { calculateGasOf } from 'src/logic/wallets/ethTransactions'
+import { ZERO_ADDRESS } from 'src/logic/wallets/ethAddresses'
 import { generateSignaturesFromTxConfirmations } from 'src/logic/safe/safeTxSigner'
 import { fetchSafeTxGasEstimation } from 'src/logic/safe/api/fetchSafeTxGasEstimation'
 import { Confirmation } from 'src/logic/safe/store/models/types/confirmation'
 import { checksumAddress } from 'src/utils/checksumAddress'
 import { hasFeature } from '../utils/safeVersion'
-import { PayableTx } from 'src/types/contracts/types'
-import { TxParameters } from 'src/routes/safe/container/hooks/useTransactionParameters'
+import { FEATURES } from '@gnosis.pm/safe-react-gateway-sdk'
 
-export type SafeTxGasEstimationProps = {
+type SafeTxGasEstimationProps = {
   safeAddress: string
   txData: string
   txRecipient: string
@@ -43,6 +42,75 @@ export const estimateSafeTxGas = async (
   }
 }
 
+type TransactionEstimationProps = {
+  txData: string
+  safeAddress: string
+  safeVersion: string
+  txRecipient: string
+  txConfirmations?: List<Confirmation>
+  txAmount: string
+  operation: number
+  gasPrice?: string
+  gasToken?: string
+  refundReceiver?: string // Address of receiver of gas payment (or 0 if tx.origin).
+  safeTxGas?: string
+  from?: string
+  isExecution: boolean
+  isOffChainSignature?: boolean
+  approvalAndExecution?: boolean
+}
+
+export const estimateTransactionGasLimit = async ({
+  txData,
+  safeAddress,
+  safeVersion,
+  txRecipient,
+  txConfirmations,
+  txAmount,
+  operation,
+  gasPrice,
+  gasToken,
+  refundReceiver,
+  safeTxGas,
+  from,
+  isExecution,
+  isOffChainSignature = false,
+  approvalAndExecution,
+}: TransactionEstimationProps): Promise<number> => {
+  if (!from) {
+    throw new Error('No from provided for approving or execute transaction')
+  }
+
+  if (isExecution) {
+    return estimateGasForTransactionExecution({
+      safeAddress,
+      safeVersion,
+      txRecipient,
+      txConfirmations,
+      txAmount,
+      txData,
+      operation,
+      from,
+      gasPrice: gasPrice || '0',
+      gasToken: gasToken || ZERO_ADDRESS,
+      refundReceiver: refundReceiver || ZERO_ADDRESS,
+      safeTxGas: safeTxGas || '0',
+      approvalAndExecution,
+    })
+  }
+
+  return estimateGasForTransactionApproval({
+    safeAddress,
+    safeVersion,
+    operation,
+    txData,
+    txAmount,
+    txRecipient,
+    from,
+    isOffChainSignature,
+  })
+}
+
 type TransactionExecutionEstimationProps = {
   txData: string
   safeAddress: string
@@ -60,7 +128,7 @@ type TransactionExecutionEstimationProps = {
   approvalAndExecution?: boolean
 }
 
-export const estimateGasForTransactionExecution = async ({
+const estimateGasForTransactionExecution = async ({
   safeAddress,
   safeVersion,
   txRecipient,
@@ -116,34 +184,50 @@ export const checkTransactionExecution = async ({
       from,
       gas: gasLimit,
     })
-    .then(() => true)
-    .catch((e) => {
-      console.warn('Transaction will fail\n\n', e)
-      return false
+    .catch(() => false)
+}
+
+type TransactionApprovalEstimationProps = {
+  safeAddress: string
+  safeVersion: string
+  txRecipient: string
+  txAmount: string
+  txData: string
+  operation: number
+  from: string
+  isOffChainSignature: boolean
+}
+
+export const estimateGasForTransactionApproval = async ({
+  safeAddress,
+  safeVersion,
+  txRecipient,
+  txAmount,
+  txData,
+  operation,
+  from,
+  isOffChainSignature,
+}: TransactionApprovalEstimationProps): Promise<number> => {
+  if (isOffChainSignature) {
+    return 0
+  }
+
+  const safeInstance = getGnosisSafeInstanceAt(safeAddress, safeVersion)
+
+  const nonce = await safeInstance.methods.nonce().call()
+  const txHash = await safeInstance.methods
+    .getTransactionHash(txRecipient, txAmount, txData, operation, 0, 0, 0, ZERO_ADDRESS, ZERO_ADDRESS, nonce)
+    .call({
+      from,
     })
-}
-
-export const isMaxFeeParam = (): boolean => {
-  return hasFeature(FEATURES.EIP1559)
-}
-
-export const createSendParams = (
-  from: string,
-  txParams: Pick<TxParameters, 'ethGasLimit' | 'ethNonce' | 'ethMaxPrioFeeInGWei' | 'ethGasPriceInGWei'>,
-): PayableTx => {
-  const sendParams: PayableTx = {
+  const approveTransactionTxData = safeInstance.methods.approveHash(txHash).encodeABI()
+  return calculateGasOf({
+    data: approveTransactionTxData,
     from,
-    value: 0,
-    gas: txParams.ethGasLimit,
-    nonce: txParams.ethNonce,
-  }
+    to: safeAddress,
+  })
+}
 
-  if (isMaxFeeParam()) {
-    sendParams.maxPriorityFeePerGas = txParams.ethMaxPrioFeeInGWei
-    sendParams.maxFeePerGas = txParams.ethGasPriceInGWei
-  } else {
-    sendParams.gasPrice = txParams.ethGasPriceInGWei
-  }
-
-  return sendParams
+export const getGasParam = (): string => {
+  return hasFeature(FEATURES.EIP1559) ? 'maxFeePerGas' : 'gasPrice'
 }

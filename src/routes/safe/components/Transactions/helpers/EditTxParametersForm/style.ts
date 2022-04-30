@@ -18,8 +18,8 @@ export const styles = createStyles({
     fontSize: lg,
   },
   closeIcon: {
-    height: '24px',
-    width: '24px',
+    height: '35px',
+    width: '35px',
   },
   container: {
     padding: `${md} ${lg}`,

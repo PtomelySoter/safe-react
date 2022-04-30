@@ -9,7 +9,6 @@ import {
   CopyToClipboardBtn,
   ExplorerButton,
 } from '@gnosis.pm/safe-react-components'
-import { useRouteMatch } from 'react-router-dom'
 
 import ButtonHelper from 'src/components/ButtonHelper'
 import FlexSpacer from 'src/components/FlexSpacer'
@@ -18,8 +17,7 @@ import { border, fontColor } from 'src/theme/variables'
 import { ChainInfo } from '@gnosis.pm/safe-react-gateway-sdk'
 import PrefixedEthHashInfo from 'src/components/PrefixedEthHashInfo'
 import { copyShortNameSelector } from 'src/logic/appearance/selectors'
-import { ADDRESSED_ROUTE, extractShortChainName } from 'src/routes/routes'
-import Threshold from 'src/components/AppLayout/Sidebar/Threshold'
+import { extractShortChainName } from 'src/routes/routes'
 
 export const TOGGLE_SIDEBAR_BTN_TESTID = 'TOGGLE_SIDEBAR_BTN'
 
@@ -37,7 +35,6 @@ const IdenticonContainer = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: relative;
 
   div:first-of-type {
     width: 32px;
@@ -132,9 +129,7 @@ const SafeHeader = ({
   const copyChainPrefix = useSelector(copyShortNameSelector)
   const shortName = extractShortChainName()
 
-  const hasSafeOpen = useRouteMatch(ADDRESSED_ROUTE)
-
-  if (!address || !hasSafeOpen) {
+  if (!address) {
     return (
       <Container>
         <IdenticonContainer>
@@ -160,7 +155,6 @@ const SafeHeader = ({
         {/* Identicon */}
         <IdenticonContainer>
           <FlexSpacer />
-          <Threshold />
           <Identicon address={address} size="lg" />
           <ButtonHelper onClick={onToggleSafeList} data-testid={TOGGLE_SIDEBAR_BTN_TESTID}>
             <StyledIcon size="md" type="circleDropdown" />

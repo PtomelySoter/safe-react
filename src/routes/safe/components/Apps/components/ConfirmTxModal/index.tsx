@@ -1,4 +1,4 @@
-import { ReactElement } from 'react'
+import { ReactElement, useState } from 'react'
 import { Transaction } from '@gnosis.pm/safe-apps-sdk-v1'
 import { RequestId } from '@gnosis.pm/safe-apps-sdk'
 import { DecodedDataParameterValue, DecodedDataResponse } from '@gnosis.pm/safe-react-gateway-sdk'
@@ -9,6 +9,7 @@ import { TransactionParams } from 'src/routes/safe/components/Apps/components/Ap
 import { mustBeEthereumAddress } from 'src/components/forms/validator'
 import { SafeAppLoadError } from './SafeAppLoadError'
 import { ReviewConfirm } from './ReviewConfirm'
+import { DecodedTxDetail } from './DecodedTxDetail'
 
 export type ConfirmTxModalProps = {
   isOpen: boolean
@@ -37,14 +38,23 @@ const isTxValid = (t: Transaction): boolean => {
   return isAddressValid && !!t.data && typeof t.data === 'string'
 }
 
-export type DecodedTxDetailType = DecodedDataParameterValue | DecodedDataResponse | undefined
+export type DecodedTxDetail = DecodedDataParameterValue | DecodedDataResponse | undefined
 
 export const ConfirmTxModal = (props: ConfirmTxModalProps): ReactElement => {
+  const [decodedTxDetails, setDecodedTxDetails] = useState<DecodedTxDetail>()
   const invalidTransactions = !props.txs.length || props.txs.some((t) => !isTxValid(t))
+
+  const showDecodedTxData = setDecodedTxDetails
+  const hideDecodedTxData = () => setDecodedTxDetails(undefined)
 
   const rejectTransaction = () => {
     props.onClose()
     props.onTxReject(props.requestId)
+  }
+
+  const closeDecodedTxDetail = () => {
+    hideDecodedTxData()
+    rejectTransaction()
   }
 
   if (invalidTransactions) {
@@ -57,7 +67,20 @@ export const ConfirmTxModal = (props: ConfirmTxModalProps): ReactElement => {
 
   return (
     <Modal description="Safe App transaction" title="Safe App transaction" open={props.isOpen}>
-      <ReviewConfirm {...props} onReject={rejectTransaction} />
+      {decodedTxDetails && (
+        <DecodedTxDetail
+          onClose={closeDecodedTxDetail}
+          hideDecodedTxData={hideDecodedTxData}
+          decodedTxData={decodedTxDetails}
+        />
+      )}
+
+      <ReviewConfirm
+        {...props}
+        onReject={rejectTransaction}
+        showDecodedTxData={showDecodedTxData}
+        hidden={!!decodedTxDetails}
+      />
     </Modal>
   )
 }

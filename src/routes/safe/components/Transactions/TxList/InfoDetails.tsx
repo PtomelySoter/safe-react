@@ -1,18 +1,16 @@
-import { ReactElement, ReactNode } from 'react'
 import { Text } from '@gnosis.pm/safe-react-components'
-
-import { StyledTxInfoDetails } from 'src/routes/safe/components/Transactions/TxList/styled'
+import { ReactElement, ReactNode } from 'react'
 
 type InfoDetailsProps = {
   children: ReactNode
-  title: string | ReactElement
+  title: string
 }
 
 export const InfoDetails = ({ children, title }: InfoDetailsProps): ReactElement => (
-  <StyledTxInfoDetails>
-    <Text size="xl" as="span" strong>
+  <>
+    <Text size="xl" strong>
       {title}
     </Text>
     {children}
-  </StyledTxInfoDetails>
+  </>
 )

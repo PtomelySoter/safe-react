@@ -4,14 +4,19 @@ import { ReactElement, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import styled from 'styled-components'
 import { toBN } from 'web3-utils'
+import { DecodedDataResponse } from '@gnosis.pm/safe-react-gateway-sdk'
 
 import { createTransaction } from 'src/logic/safe/store/actions/createTransaction'
 import { getMultisendContractAddress } from 'src/logic/contracts/safeContracts'
 import { TX_NOTIFICATION_TYPES } from 'src/logic/safe/transactions'
 import { encodeMultiSendCall } from 'src/logic/safe/transactions/multisend'
 import { getExplorerInfo, getNativeCurrency } from 'src/config'
+import { EstimationStatus, useEstimateTransactionGas } from 'src/logic/hooks/useEstimateTransactionGas'
 import { ModalHeader } from 'src/routes/safe/components/Balances/SendModal/screens/ModalHeader'
+import { EditableTxParameters } from 'src/routes/safe/components/Transactions/helpers/EditableTxParameters'
+import { TxParametersDetail } from 'src/routes/safe/components/Transactions/helpers/TxParametersDetail'
 import { lg, md } from 'src/theme/variables'
+import { useEstimationStatus } from 'src/logic/hooks/useEstimationStatus'
 import { TxParameters } from 'src/routes/safe/container/hooks/useTransactionParameters'
 import { BasicTxInfo, DecodeTxs } from 'src/components/DecodeTxs'
 import { fetchTxDecoder } from 'src/utils/decodeTx'
@@ -19,13 +24,13 @@ import { fromTokenUnit } from 'src/logic/tokens/utils/humanReadableValue'
 import Block from 'src/components/layout/Block'
 import Hairline from 'src/components/layout/Hairline'
 import Divider from 'src/components/Divider'
+import { ButtonStatus, Modal } from 'src/components/Modal'
 import PrefixedEthHashInfo from 'src/components/PrefixedEthHashInfo'
+import { ReviewInfoText } from 'src/components/ReviewInfoText'
 
-import { ConfirmTxModalProps, DecodedTxDetailType } from '.'
+import { ConfirmTxModalProps, DecodedTxDetail } from '.'
 import { grantedSelector } from 'src/routes/safe/container/selector'
-import { TxModalWrapper } from 'src/routes/safe/components/Transactions/helpers/TxModalWrapper'
-import Paragraph from 'src/components/layout/Paragraph'
-import Row from 'src/components/layout/Row'
+import ExecuteCheckbox from 'src/components/ExecuteCheckbox'
 
 const Container = styled.div`
   max-width: 480px;
@@ -33,7 +38,7 @@ const Container = styled.div`
 `
 
 const DecodeTxsWrapper = styled.div`
-  margin: 0;
+  margin: 24px -24px;
 `
 
 const StyledBlock = styled(Block)`
@@ -52,6 +57,8 @@ const StyledBlock = styled(Block)`
 
 type Props = ConfirmTxModalProps & {
   onReject: () => void
+  showDecodedTxData: (decodedTxDetails: DecodedTxDetail) => void
+  hidden: boolean // used to prevent re-rendering the modal each time a tx is inspected
 }
 
 const parseTxValue = (value: string | number): string => {
@@ -64,13 +71,16 @@ export const ReviewConfirm = ({
   safeAddress,
   ethBalance,
   safeName,
+  params,
+  hidden,
   onUserConfirm,
   onClose,
   onReject,
   requestId,
+  showDecodedTxData,
 }: Props): ReactElement => {
   const isMultiSend = txs.length > 1
-  const [decodedData, setDecodedData] = useState<DecodedTxDetailType>()
+  const [decodedData, setDecodedData] = useState<DecodedDataResponse | null>(null)
   const dispatch = useDispatch()
   const nativeCurrency = getNativeCurrency()
   const explorerUrl = getExplorerInfo(safeAddress)
@@ -89,21 +99,41 @@ export const ReviewConfirm = ({
     [txs, isMultiSend],
   )
   const operation = useMemo(() => (isMultiSend ? Operation.DELEGATE : Operation.CALL), [isMultiSend])
+  const [manualSafeTxGas, setManualSafeTxGas] = useState('0')
+  const [manualGasPrice, setManualGasPrice] = useState<string | undefined>()
+  const [manualGasLimit, setManualGasLimit] = useState<string | undefined>()
+
+  const {
+    gasLimit,
+    gasPriceFormatted,
+    gasEstimation,
+    isOffChainSignature,
+    isCreation,
+    isExecution,
+    gasCostFormatted,
+    txEstimationExecutionStatus,
+  } = useEstimateTransactionGas({
+    txData: txData || '',
+    txRecipient,
+    operation,
+    txAmount: txValue,
+    safeTxGas: manualSafeTxGas,
+    manualGasPrice,
+    manualGasLimit,
+  })
+
+  const [buttonStatus, setButtonStatus] = useEstimationStatus(txEstimationExecutionStatus)
+  const [executionApproved, setExecutionApproved] = useState<boolean>(true)
+  const doExecute = isExecution && executionApproved
 
   // Decode tx data.
   useEffect(() => {
-    let isCurrent = true
     const decodeTxData = async () => {
       const res = await fetchTxDecoder(txData)
-      if (res && isCurrent) {
-        setDecodedData(res)
-      }
+      setDecodedData(res)
     }
 
     decodeTxData()
-    return () => {
-      isCurrent = false
-    }
   }, [txData])
 
   const handleUserConfirmation = (safeTxHash: string): void => {
@@ -111,7 +141,9 @@ export const ReviewConfirm = ({
     onClose()
   }
 
-  const confirmTransactions = (txParameters: TxParameters, delayExecution: boolean) => {
+  const confirmTransactions = (txParameters: TxParameters) => {
+    setButtonStatus(ButtonStatus.LOADING)
+
     dispatch(
       createTransaction(
         {
@@ -126,65 +158,111 @@ export const ReviewConfirm = ({
           safeTxGas: txParameters.safeTxGas,
           ethParameters: txParameters,
           notifiedTransaction: TX_NOTIFICATION_TYPES.STANDARD_TX,
-          delayExecution,
+          delayExecution: !executionApproved,
         },
         handleUserConfirmation,
         onReject,
       ),
     )
+
+    setButtonStatus(ButtonStatus.READY)
+  }
+
+  const closeEditModalCallback = (txParameters: TxParameters) => {
+    const oldGasPrice = gasPriceFormatted
+    const newGasPrice = txParameters.ethGasPrice
+    const oldSafeTxGas = gasEstimation
+    const newSafeTxGas = txParameters.safeTxGas
+
+    if (newGasPrice && oldGasPrice !== newGasPrice) {
+      setManualGasPrice(txParameters.ethGasPrice)
+    }
+
+    if (txParameters.ethGasLimit && gasLimit !== txParameters.ethGasLimit) {
+      setManualGasLimit(txParameters.ethGasLimit)
+    }
+
+    if (newSafeTxGas && oldSafeTxGas !== newSafeTxGas) {
+      setManualSafeTxGas(newSafeTxGas)
+    }
   }
 
   return (
-    <TxModalWrapper
-      txTo={txRecipient}
-      txData={txData}
-      txValue={txValue}
-      operation={operation}
-      onSubmit={confirmTransactions}
-      isSubmitDisabled={!isOwner}
-      onBack={onReject}
+    <EditableTxParameters
+      ethGasLimit={gasLimit}
+      ethGasPrice={gasPriceFormatted}
+      safeTxGas={Math.max(parseInt(gasEstimation), params?.safeTxGas || 0).toString()}
+      closeEditModalCallback={closeEditModalCallback}
+      isOffChainSignature={isOffChainSignature}
+      isExecution={doExecute}
     >
-      <div>
-        <ModalHeader title={app.name} iconUrl={app.iconUrl} onClose={onReject} />
+      {(txParameters, toggleEditMode) => (
+        <div hidden={hidden}>
+          <ModalHeader title={app.name} iconUrl={app.iconUrl} onClose={onReject} />
 
-        <Hairline />
+          <Hairline />
 
-        <Container>
-          {/* Safe */}
-          <Row margin="xs">
-            <Paragraph color="disabled" noMargin size="lg">
-              Sending from
-            </Paragraph>
-          </Row>
-          <PrefixedEthHashInfo
-            name={safeName}
-            hash={safeAddress}
-            strongName
-            showAvatar
-            showCopyBtn
-            explorerUrl={explorerUrl}
-          />
-          <StyledBlock>
-            <Text size="md">Balance:</Text>
-            <Text size="md" strong>{`${ethBalance} ${nativeCurrency.symbol}`}</Text>
-          </StyledBlock>
+          <Container>
+            {/* Safe */}
+            <PrefixedEthHashInfo name={safeName} hash={safeAddress} showAvatar showCopyBtn explorerUrl={explorerUrl} />
+            <StyledBlock>
+              <Text size="md">Balance:</Text>
+              <Text size="md" strong>{`${ethBalance} ${nativeCurrency.symbol}`}</Text>
+            </StyledBlock>
 
-          <Divider withArrow />
+            <Divider withArrow />
 
-          {/* Txs decoded */}
-          <BasicTxInfo
-            txRecipient={txRecipient}
-            txData={txData}
-            txValue={fromTokenUnit(txValue, nativeCurrency.decimals)}
-          />
+            {/* Txs decoded */}
+            <BasicTxInfo
+              txRecipient={txRecipient}
+              txData={txData}
+              txValue={fromTokenUnit(txValue, nativeCurrency.decimals)}
+            />
 
-          {txs.length > 0 && (
             <DecodeTxsWrapper>
-              <DecodeTxs txs={txs} decodedData={decodedData} />
+              <DecodeTxs txs={txs} decodedData={decodedData} onTxItemClick={showDecodedTxData} />
             </DecodeTxsWrapper>
+
+            {!isMultiSend && <Divider />}
+
+            {isExecution && <ExecuteCheckbox onChange={setExecutionApproved} />}
+
+            {/* Tx Parameters */}
+            <TxParametersDetail
+              txParameters={txParameters}
+              onEdit={toggleEditMode}
+              isTransactionCreation={isCreation}
+              isTransactionExecution={doExecute}
+              isOffChainSignature={isOffChainSignature}
+            />
+          </Container>
+
+          {/* Gas info */}
+          {txEstimationExecutionStatus === EstimationStatus.LOADING ? null : (
+            <ReviewInfoText
+              gasCostFormatted={isOwner ? gasCostFormatted : undefined}
+              isCreation={isCreation}
+              isExecution={doExecute}
+              isOffChainSignature={isOffChainSignature}
+              safeNonce={txParameters.safeNonce}
+              txEstimationExecutionStatus={txEstimationExecutionStatus}
+            />
           )}
-        </Container>
-      </div>
-    </TxModalWrapper>
+
+          {/* Buttons */}
+          <Modal.Footer withoutBorder={txEstimationExecutionStatus !== EstimationStatus.LOADING}>
+            <Modal.Footer.Buttons
+              cancelButtonProps={{ onClick: onReject }}
+              confirmButtonProps={{
+                onClick: () => confirmTransactions(txParameters),
+                disabled: !isOwner,
+                status: buttonStatus,
+                text: txEstimationExecutionStatus === EstimationStatus.LOADING ? 'Estimating' : undefined,
+              }}
+            />
+          </Modal.Footer>
+        </div>
+      )}
+    </EditableTxParameters>
   )
 }

@@ -10,41 +10,35 @@ import { getExplorerInfo } from 'src/config'
 import PrefixedEthHashInfo from 'src/components/PrefixedEthHashInfo'
 
 const NestedWrapper = styled.div`
-  padding-left: 12px;
+  padding-left: 4px;
 `
 
 interface RenderValueProps {
   method: string
   type: string
   value: string | string[]
-  key?: string
 }
 
 const GenericValue = ({ method, type, value }: RenderValueProps): React.ReactElement => {
-  const getTextValue = (value: string, key?: string) => <HexEncodedData limit={60} hexData={value} key={key} />
+  const getTextValue = (value: string) => <HexEncodedData limit={60} hexData={value} />
 
   const getArrayValue = (parentId: string, value: string[] | string) => (
-    <>
+    <div>
       [
       <NestedWrapper>
         {(value as string[]).map((currentValue, index) => {
           const key = `${parentId}-value-${index}`
           return Array.isArray(currentValue) ? (
-            <Text key={key} size="xl" as="span">
-              {index > 0 && (
-                <>
-                  ,<br />
-                </>
-              )}
+            <Text key={key} size="xl">
               {getArrayValue(key, currentValue)}
             </Text>
           ) : (
-            getTextValue(currentValue, key)
+            getTextValue(currentValue)
           )
         })}
       </NestedWrapper>
       ]
-    </>
+    </div>
   )
 
   if (isArrayParameter(type) || Array.isArray(value)) {
@@ -57,34 +51,18 @@ const GenericValue = ({ method, type, value }: RenderValueProps): React.ReactEle
 const Value = ({ type, ...props }: RenderValueProps): React.ReactElement => {
   if (isArrayParameter(type) && isAddress(type)) {
     return (
-      <>
+      <div>
         [
         <NestedWrapper>
-          {(props.value as string[]).map((address, index) => {
-            const key = `${props.key || props.method}-${index}`
-            if (Array.isArray(address)) {
-              const newProps = {
-                type,
-                ...props,
-                value: address,
-                key,
-              }
-              return <Value {...newProps} />
-            }
+          {(props.value as string[]).map((address) => {
             const explorerUrl = getExplorerInfo(address)
             return (
-              <PrefixedEthHashInfo
-                key={`${address}_${key}`}
-                textSize="xl"
-                hash={address}
-                showCopyBtn
-                explorerUrl={explorerUrl}
-              />
+              <PrefixedEthHashInfo key={address} textSize="xl" hash={address} showCopyBtn explorerUrl={explorerUrl} />
             )
           })}
         </NestedWrapper>
         ]
-      </>
+      </div>
     )
   }
 

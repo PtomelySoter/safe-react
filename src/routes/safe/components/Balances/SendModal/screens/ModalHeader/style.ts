@@ -3,25 +3,28 @@ import { createStyles } from '@material-ui/core'
 
 export const styles = createStyles({
   heading: {
-    padding: `${md} ${lg} 12px`,
+    padding: `${md} ${lg}`,
     justifyContent: 'flex-start',
     boxSizing: 'border-box',
     maxHeight: '74px',
-    flexWrap: 'nowrap',
   },
   annotation: {
+    letterSpacing: '-1px',
     color: secondaryText,
     marginRight: 'auto',
-    marginLeft: '8px',
-    whiteSpace: 'nowrap',
-    flex: 1,
+    marginLeft: '20px',
   },
   headingText: {
-    whiteSpace: 'nowrap',
+    fontSize: lg,
   },
   closeIcon: {
-    height: '24px',
-    width: '24px',
+    height: '35px',
+    width: '35px',
+  },
+  chainIndicator: {
+    padding: `0 ${md}`,
+    height: '20px',
+    alignItems: 'center',
   },
   icon: {
     width: '20px',

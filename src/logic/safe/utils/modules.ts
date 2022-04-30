@@ -1,11 +1,10 @@
 import { Operation } from '@gnosis.pm/safe-react-gateway-sdk'
 
-import { SENTINEL_ADDRESS } from 'src/logic/contracts/safeContracts'
+import { getGnosisSafeInstanceAt, SENTINEL_ADDRESS } from 'src/logic/contracts/safeContracts'
 import { CreateTransactionArgs } from 'src/logic/safe/store/actions/createTransaction'
 import { ModulePair } from 'src/logic/safe/store/models/safe'
 import { TX_NOTIFICATION_TYPES } from 'src/logic/safe/transactions'
 import { sameAddress } from 'src/logic/wallets/ethAddresses'
-import { getSafeSDK } from 'src/logic/wallets/getWeb3'
 
 /**
  * Builds a collection of tuples with (prev, module) module addresses
@@ -40,47 +39,31 @@ export const buildModulesLinkedList = (modules: string[]): Array<ModulePair> | n
   return null
 }
 
-type DisableModuleParams = {
-  moduleAddress: string
-  safeAddress: string
-  safeVersion: string
-  connectedWalletAddress: string
-}
+export const getDisableModuleTxData = (modulePair: ModulePair, safeAddress: string, safeVersion: string): string => {
+  const [previousModule, module] = modulePair
+  const safeInstance = getGnosisSafeInstanceAt(safeAddress, safeVersion)
 
-export const getDisableModuleTxData = async ({
-  moduleAddress,
-  safeAddress,
-  safeVersion,
-  connectedWalletAddress,
-}: DisableModuleParams): Promise<string> => {
-  const sdk = await getSafeSDK(connectedWalletAddress, safeAddress, safeVersion)
-  const safeTx = await sdk.getDisableModuleTx(moduleAddress, { safeTxGas: 0 })
-
-  return safeTx.data.data
+  return safeInstance.methods.disableModule(previousModule, module).encodeABI()
 }
 
 type EnableModuleParams = {
   moduleAddress: string
   safeAddress: string
   safeVersion: string
-  connectedWalletAddress: string
 }
-
-export const enableModuleTx = async ({
+export const enableModuleTx = ({
   moduleAddress,
   safeAddress,
   safeVersion,
-  connectedWalletAddress,
-}: EnableModuleParams): Promise<CreateTransactionArgs> => {
-  const sdk = await getSafeSDK(connectedWalletAddress, safeAddress, safeVersion)
-  const safeTx = await sdk.getEnableModuleTx(moduleAddress, { safeTxGas: 0 })
+}: EnableModuleParams): CreateTransactionArgs => {
+  const safeInstance = getGnosisSafeInstanceAt(safeAddress, safeVersion)
 
   return {
     safeAddress,
     to: safeAddress,
     operation: Operation.CALL,
     valueInWei: '0',
-    txData: safeTx.data.data,
+    txData: safeInstance.methods.enableModule(moduleAddress).encodeABI(),
     notifiedTransaction: TX_NOTIFICATION_TYPES.SETTINGS_CHANGE_TX,
   }
 }

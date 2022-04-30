@@ -29,7 +29,6 @@ export const sendRemoveOwner = async (
   dispatch: Dispatch,
   txParameters: TxParameters,
   connectedWalletAddress: string,
-  delayExecution: boolean,
 ): Promise<void> => {
   const sdk = await getSafeSDK(connectedWalletAddress, safeAddress, safeVersion)
   const safeTx = await sdk.getRemoveOwnerTx(
@@ -48,7 +47,6 @@ export const sendRemoveOwner = async (
       safeTxGas: txParameters.safeTxGas,
       ethParameters: txParameters,
       notifiedTransaction: TX_NOTIFICATION_TYPES.SETTINGS_CHANGE_TX,
-      delayExecution,
     }),
   )
 }
@@ -92,7 +90,7 @@ export const RemoveOwnerModal = ({ isOpen, onClose, owner }: RemoveOwnerProps): 
     setActiveScreen('reviewRemoveOwner')
   }
 
-  const onRemoveOwner = async (txParameters: TxParameters, delayExecution: boolean) => {
+  const onRemoveOwner = async (txParameters: TxParameters) => {
     onClose()
 
     try {
@@ -104,7 +102,6 @@ export const RemoveOwnerModal = ({ isOpen, onClose, owner }: RemoveOwnerProps): 
         dispatch,
         txParameters,
         connectedWalletAddress,
-        delayExecution,
       )
     } catch (error) {
       logError(Errors._809, error.message)

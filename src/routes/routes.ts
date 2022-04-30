@@ -14,7 +14,7 @@ export const history = createBrowserHistory({
 // Safe specific routes
 const hashRegExp = '0x[0-9A-Fa-f]'
 
-const chainSpecificSafeAddressPathRegExp = `[a-z0-9-]{2,}:${hashRegExp}{40}`
+const chainSpecificSafeAddressPathRegExp = `[a-z0-9-_]{2,}:${hashRegExp}{40}`
 
 export const SAFE_ADDRESS_SLUG = 'prefixedSafeAddress'
 export const ADDRESSED_ROUTE = `/:${SAFE_ADDRESS_SLUG}(${chainSpecificSafeAddressPathRegExp})`
@@ -67,7 +67,7 @@ export const SAFE_ROUTES = {
 export const getNetworkRootRoutes = (): Array<{ chainId: ChainId; route: string; shortName: string }> =>
   getChains().map(({ chainId, chainName, shortName }) => ({
     chainId,
-    route: `/${chainName.replace(/\s+/g, '-').toLowerCase()}`,
+    route: `/${chainName.replaceAll(' ', '-').toLowerCase()}`,
     shortName,
   }))
 
@@ -93,6 +93,14 @@ export const extractPrefixedSafeAddress = (
     shortName: prefix,
     safeAddress: checksumAddress(address),
   }
+}
+
+export const hasPrefixedSafeAddressInUrl = (): boolean => {
+  const match = matchPath<SafeRouteSlugs>(history.location.pathname, {
+    // Routes that have addresses in URL
+    path: [ADDRESSED_ROUTE, LOAD_SPECIFIC_SAFE_ROUTE],
+  })
+  return !!match?.params?.[SAFE_ADDRESS_SLUG]
 }
 
 export const extractShortChainName = (): ShortName => extractPrefixedSafeAddress().shortName

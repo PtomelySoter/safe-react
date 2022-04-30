@@ -14,22 +14,20 @@ import PrefixedEthHashInfo from 'src/components/PrefixedEthHashInfo'
 import { disabled, extraSmallFontSize, lg, md, sm } from 'src/theme/variables'
 import { minMaxLength } from 'src/components/forms/validator'
 import { getExplorerInfo } from 'src/config'
-import { FIELD_SAFE_OWNER_ENS_LIST, FIELD_SAFE_OWNER_LIST, LoadSafeFormValues } from '../fields/loadFields'
+import { FIELD_SAFE_OWNER_LIST } from '../fields/loadFields'
 import NetworkLabel from 'src/components/NetworkLabel/NetworkLabel'
 
 export const loadSafeOwnersStepLabel = 'Owners'
 
 function LoadSafeOwnersStep(): ReactElement {
   const loadSafeForm = useForm()
-
-  const formValues = loadSafeForm.getState().values as LoadSafeFormValues
-  const ownerList = formValues[FIELD_SAFE_OWNER_LIST]
+  const ownersWithName = loadSafeForm.getState().values[FIELD_SAFE_OWNER_LIST]
 
   return (
     <>
       <TitleContainer>
         <Paragraph color="primary" noMargin size="lg" data-testid="load-safe-owners-step">
-          This Safe on <NetworkLabel /> has {ownerList.length} owners. Optional: Provide a name for each owner.
+          This Safe on <NetworkLabel /> has {ownersWithName.length} owners. Optional: Provide a name for each owner.
         </Paragraph>
       </TitleContainer>
       <Hairline />
@@ -40,10 +38,8 @@ function LoadSafeOwnersStep(): ReactElement {
         </HeaderContainer>
         <Hairline />
         <Block margin="md" padding="md">
-          {ownerList.map(({ address, name }, index) => {
+          {ownersWithName.map(({ address, name }, index) => {
             const ownerFieldName = `owner-address-${address}`
-            const ownerName = formValues[FIELD_SAFE_OWNER_ENS_LIST][address] || 'Owner Name'
-
             return (
               <OwnerContainer key={address} data-testid="owner-row">
                 <Col xs={4}>
@@ -51,8 +47,8 @@ function LoadSafeOwnersStep(): ReactElement {
                     component={TextField}
                     initialValue={name}
                     name={ownerFieldName}
-                    placeholder={ownerName}
-                    label="Owner Name"
+                    placeholder="Owner Name"
+                    text="Owner Name"
                     type="text"
                     validate={minMaxLength(0, 50)}
                     testId={`load-safe-owner-name-${index}`}
@@ -86,7 +82,7 @@ const HeaderContainer = styled(Row)`
 
 const OwnerContainer = styled(Row)`
   padding: 0 ${lg};
-  margin-bottom: ${md};
+  margin-bottom: 12px;
 `
 
 const OwnerAddressContainer = styled(Row)`

@@ -23,10 +23,10 @@ export const useStyles = makeStyles(
       height: '100%',
     },
     ownersTitle: {
-      padding: `${sm} ${lg}`,
+      padding: lg,
     },
     owner: {
-      padding: `${sm} ${lg}`,
+      padding: sm,
       alignItems: 'center',
     },
     name: {
@@ -34,13 +34,14 @@ export const useStyles = makeStyles(
       overflow: 'hidden',
     },
     selectedOwnerRemoved: {
-      padding: `${sm} ${lg}`,
+      padding: sm,
       alignItems: 'center',
       backgroundColor: '#ffe6ea',
     },
     selectedOwnerAdded: {
-      padding: `${sm} ${lg}`,
+      padding: sm,
       alignItems: 'center',
+      backgroundColor: '#f7f5f5',
     },
   }),
 )

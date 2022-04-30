@@ -10,7 +10,7 @@ import {
   nftAssetReducer,
   nftTokensReducer,
 } from 'src/logic/collectibles/store/reducer/collectibles'
-import cookiesReducer, { CookieState, COOKIES_REDUCER_ID } from 'src/logic/cookies/store/reducer/cookies'
+import cookiesReducer, { COOKIES_REDUCER_ID } from 'src/logic/cookies/store/reducer/cookies'
 import currentSessionReducer, {
   CurrentSessionState,
   CURRENT_SESSION_REDUCER_ID,
@@ -20,14 +20,13 @@ import gatewayTransactionsReducer, {
   GatewayTransactionsState,
   GATEWAY_TRANSACTIONS_ID,
 } from 'src/logic/safe/store/reducer/gatewayTransactions'
-import {
-  pendingTransactionsReducer,
-  PendingTransactionsState,
-  PENDING_TRANSACTIONS_ID,
-} from 'src/logic/safe/store/reducer/pendingTransactions'
+import localTransactionsReducer, {
+  LocalStatusesState,
+  LOCAL_TRANSACTIONS_ID,
+} from 'src/logic/safe/store/reducer/localTransactions'
 import tokensReducer, { TokenState, TOKEN_REDUCER_ID } from 'src/logic/tokens/store/reducer/tokens'
-import providerMiddleware from 'src/logic/wallets/store/middleware'
-import providerReducer, { ProvidersState, PROVIDER_REDUCER_ID } from 'src/logic/wallets/store/reducer'
+import providerWatcher from 'src/logic/wallets/store/middlewares/providerWatcher'
+import providerReducer, { ProviderState, PROVIDER_REDUCER_ID } from 'src/logic/wallets/store/reducer/provider'
 import notificationsMiddleware from 'src/logic/safe/store/middleware/notificationsMiddleware'
 import { safeStorageMiddleware } from 'src/logic/safe/store/middleware/safeStorage'
 import safeReducer, { SAFE_REDUCER_ID } from 'src/logic/safe/store/reducer/safe'
@@ -48,8 +47,7 @@ import { NFTAssets, NFTTokens } from 'src/logic/collectibles/sources/collectible
 import { SafeReducerMap } from 'src/logic/safe/store/reducer/types/safe'
 import { LS_NAMESPACE, LS_SEPARATOR } from 'src/utils/constants'
 import { ConfigState } from 'src/logic/config/store/reducer/reducer'
-import { pendingTransactionsMiddleware } from 'src/logic/safe/store/middleware/pendingTransactionsMiddleware'
-import { gatewayTransactionsMiddleware } from 'src/logic/safe/store/middleware/gatewayTransactionsMiddleware'
+import { localTransactionsMiddleware } from 'src/logic/safe/store/middleware/localTransactionsMiddleware'
 
 const CURRENCY_KEY = `${CURRENCY_REDUCER_ID}.selectedCurrency`
 
@@ -72,11 +70,10 @@ const enhancer = composeEnhancers(
     save(LS_CONFIG),
     notificationsMiddleware,
     safeStorageMiddleware,
-    providerMiddleware,
+    providerWatcher,
     addressBookMiddleware,
     configMiddleware,
-    gatewayTransactionsMiddleware,
-    pendingTransactionsMiddleware,
+    localTransactionsMiddleware,
   ),
 )
 
@@ -87,7 +84,7 @@ const reducers = {
   [NFT_TOKENS_REDUCER_ID]: nftTokensReducer,
   [TOKEN_REDUCER_ID]: tokensReducer,
   [GATEWAY_TRANSACTIONS_ID]: gatewayTransactionsReducer,
-  [PENDING_TRANSACTIONS_ID]: pendingTransactionsReducer,
+  [LOCAL_TRANSACTIONS_ID]: localTransactionsReducer,
   [NOTIFICATIONS_REDUCER_ID]: notificationsReducer,
   [CURRENCY_REDUCER_ID]: currencyValuesReducer,
   [COOKIES_REDUCER_ID]: cookiesReducer,
@@ -103,16 +100,16 @@ const rootReducer = combineReducers(reducers)
 // ReturnType<typeof store.getState>
 // or https://dev.to/svehla/typescript-100-type-safe-react-redux-under-20-lines-4h8n
 export type AppReduxState = CombinedState<{
-  [PROVIDER_REDUCER_ID]: ProvidersState
+  [PROVIDER_REDUCER_ID]: ProviderState
   [SAFE_REDUCER_ID]: SafeReducerMap
   [NFT_ASSETS_REDUCER_ID]: NFTAssets
   [NFT_TOKENS_REDUCER_ID]: NFTTokens
   [TOKEN_REDUCER_ID]: TokenState
   [GATEWAY_TRANSACTIONS_ID]: GatewayTransactionsState
-  [PENDING_TRANSACTIONS_ID]: PendingTransactionsState
+  [LOCAL_TRANSACTIONS_ID]: LocalStatusesState
   [NOTIFICATIONS_REDUCER_ID]: Map<string, Notification>
   [CURRENCY_REDUCER_ID]: CurrencyValuesState
-  [COOKIES_REDUCER_ID]: CookieState
+  [COOKIES_REDUCER_ID]: Map<string, any>
   [ADDRESS_BOOK_REDUCER_ID]: AddressBookState
   [CURRENT_SESSION_REDUCER_ID]: CurrentSessionState
   [CONFIG_REDUCER_ID]: ConfigState

@@ -17,12 +17,15 @@ import { currentSafeWithNames } from 'src/logic/safe/store/selectors'
 import { currentCurrencySelector } from 'src/logic/currencyValues/store/selectors'
 import Modal from 'src/components/Modal'
 import SendModal from 'src/routes/safe/components/Balances/SendModal'
+import { useLoadSafe } from 'src/logic/safe/hooks/useLoadSafe'
+import { useSafeScheduledUpdates } from 'src/logic/safe/hooks/useSafeScheduledUpdates'
 import useSafeActions from 'src/logic/safe/hooks/useSafeActions'
 import { formatAmountInUsFormat } from 'src/logic/tokens/utils/formatAmount'
 import { grantedSelector } from 'src/routes/safe/container/selector'
 import ReceiveModal from './ReceiveModal'
 import { useSidebarItems } from 'src/components/AppLayout/Sidebar/useSidebarItems'
 import useAddressBookSync from 'src/logic/addressBook/hooks/useAddressBookSync'
+import { extractSafeAddress } from 'src/routes/routes'
 
 const notificationStyles = {
   success: {
@@ -52,12 +55,13 @@ const App: React.FC = ({ children }) => {
   const classes = useStyles()
   const { toggleSidebar } = useContext(SafeListSidebarContext)
   const { name: safeName, totalFiatBalance: currentSafeBalance } = useSelector(currentSafeWithNames)
+  const addressFromUrl = extractSafeAddress()
   const { safeActionsState, onShow, onHide, showSendFunds, hideSendFunds } = useSafeActions()
   const currentCurrency = useSelector(currentCurrencySelector)
   const granted = useSelector(grantedSelector)
   const sidebarItems = useSidebarItems()
-  const { address: safeAddress } = useSelector(currentSafeWithNames)
-
+  useLoadSafe(addressFromUrl) // load initially
+  useSafeScheduledUpdates(addressFromUrl) // load every X seconds
   useAddressBookSync()
 
   const sendFunds = safeActionsState.sendFunds
@@ -91,7 +95,7 @@ const App: React.FC = ({ children }) => {
 
           <AppLayout
             sidebarItems={sidebarItems}
-            safeAddress={safeAddress}
+            safeAddress={addressFromUrl}
             safeName={safeName}
             balance={balance}
             granted={granted}
@@ -109,7 +113,7 @@ const App: React.FC = ({ children }) => {
             selectedToken={sendFunds.selectedToken}
           />
 
-          {safeAddress && (
+          {addressFromUrl && (
             <Modal
               description="Receive Tokens Form"
               handleClose={onReceiveHide}
@@ -117,7 +121,7 @@ const App: React.FC = ({ children }) => {
               paperClassName="receive-modal"
               title="Receive Tokens"
             >
-              <ReceiveModal onClose={onReceiveHide} safeAddress={safeAddress} safeName={safeName} />
+              <ReceiveModal onClose={onReceiveHide} safeAddress={addressFromUrl} safeName={safeName} />
             </Modal>
           )}
         </>

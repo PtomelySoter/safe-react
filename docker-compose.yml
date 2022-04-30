@@ -2,6 +2,7 @@ version: '3.2'
 
 services:
   safe-react:
+    image: drboolean/safe-react
     build: ./
     volumes:
       - /app/node_modules

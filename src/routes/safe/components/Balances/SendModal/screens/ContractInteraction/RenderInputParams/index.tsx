@@ -23,7 +23,7 @@ export const RenderInputParams = (): ReactElement | null => {
         const key = generateFormFieldKey(type, method.signatureHash, index)
 
         return (
-          <Row key={key} margin="md">
+          <Row key={key} margin="sm">
             <InputComponent type={type} keyValue={key} placeholder={placeholder} />
           </Row>
         )

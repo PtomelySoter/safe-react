@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux'
 import { currentSafeNonce } from 'src/logic/safe/store/selectors'
 import { Transaction } from 'src/logic/safe/store/models/types/gateway.d'
 import { useActionButtonsHandlers } from 'src/routes/safe/components/Transactions/TxList/hooks/useActionButtonsHandlers'
-import useTxStatus from 'src/logic/hooks/useTxStatus'
+import useLocalTxStatus from 'src/logic/hooks/useLocalTxStatus'
 import { isAwaitingExecution } from './utils'
 
 type TxExpandedActionsProps = {
@@ -24,7 +24,7 @@ export const TxExpandedActions = ({ transaction }: TxExpandedActionsProps): Reac
     disabledActions,
   } = useActionButtonsHandlers(transaction)
   const nonce = useSelector(currentSafeNonce)
-  const txStatus = useTxStatus(transaction)
+  const txStatus = useLocalTxStatus(transaction)
   const isAwaitingEx = isAwaitingExecution(txStatus)
 
   const onExecuteOrConfirm = (event) => {
@@ -61,13 +61,9 @@ export const TxExpandedActions = ({ transaction }: TxExpandedActionsProps): Reac
         </span>
       </Tooltip>
       {canCancel && (
-        <Tooltip title="Reject" placement="top">
-          <span>
-            <Button size="md" color="error" onClick={handleCancelButtonClick} className="error" disabled={isPending}>
-              Reject
-            </Button>
-          </span>
-        </Tooltip>
+        <Button size="md" color="error" onClick={handleCancelButtonClick} className="error" disabled={isPending}>
+          Reject
+        </Button>
       )}
     </>
   )

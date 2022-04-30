@@ -13,14 +13,11 @@ export const checkIfOffChainSignatureIsPossible = (
   isExecution: boolean,
   isSmartContractWallet: boolean,
   safeVersion?: string,
-): boolean => {
-  return (
-    !isExecution &&
-    !isSmartContractWallet &&
-    !!safeVersion &&
-    semverSatisfies(safeVersion, SAFE_VERSION_FOR_OFF_CHAIN_SIGNATURES)
-  )
-}
+): boolean =>
+  !isExecution &&
+  !isSmartContractWallet &&
+  !!safeVersion &&
+  semverSatisfies(safeVersion, SAFE_VERSION_FOR_OFF_CHAIN_SIGNATURES)
 
 // https://docs.gnosis.io/safe/docs/contracts_signatures/#pre-validated-signatures
 export const getPreValidatedSignatures = (from: string, initialString: string = EMPTY_DATA): string => {

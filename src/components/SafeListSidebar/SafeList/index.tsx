@@ -102,7 +102,7 @@ export const SafeList = ({ onSafeClick }: Props): ReactElement => {
         return (
           <Fragment key={chainId}>
             <ListItem selected>
-              <StyledDot {...theme} className="networkLabel" />
+              <StyledDot {...theme} />
               {chainName}
             </ListItem>
             <MuiList>

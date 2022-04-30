@@ -26,7 +26,6 @@ describe('src/logic/wallets/utils/network', () => {
             return Promise.reject(err)
           }),
         },
-        name: 'Test',
       }
 
       expect(switchNetwork(wallet as Wallet, '1438' as unknown as ChainId)).rejects.toThrow(
@@ -43,7 +42,6 @@ describe('src/logic/wallets/utils/network', () => {
             return Promise.reject(err)
           }),
         },
-        name: 'Test',
       }
 
       expect(switchNetwork(wallet as Wallet, '1438' as unknown as ChainId)).rejects.toThrow(
@@ -60,7 +58,6 @@ describe('src/logic/wallets/utils/network', () => {
             return Promise.reject(err)
           }),
         },
-        name: 'Test',
       }
 
       expect(switchNetwork(wallet as Wallet, '1438' as unknown as ChainId)).resolves.toEqual(undefined)

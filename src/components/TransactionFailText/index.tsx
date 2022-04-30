@@ -1,22 +1,15 @@
 import { createStyles, makeStyles } from '@material-ui/core'
 import { sm } from 'src/theme/variables'
+import { EstimationStatus } from 'src/logic/hooks/useEstimateTransactionGas'
 import Row from 'src/components/layout/Row'
 import Paragraph from 'src/components/layout/Paragraph'
 import Img from 'src/components/layout/Img'
 import InfoIcon from 'src/assets/icons/info_red.svg'
 
 import { useSelector } from 'react-redux'
+import { currentSafeThreshold } from 'src/logic/safe/store/selectors'
 import { shouldSwitchWalletChain } from 'src/logic/wallets/store/selectors'
 import { grantedSelector } from 'src/routes/safe/container/selector'
-import { EstimationStatus } from 'src/logic/hooks/useEstimateTransactionGas'
-
-enum ErrorMessage {
-  general = 'This transaction will most likely fail.',
-  creation = 'To save gas costs, avoid creating the transaction.',
-  execution = 'To save gas costs, reject this transaction.',
-  notOwner = `You are currently not an owner of this Safe and won't be able to submit this transaction.`,
-  wrongChain = 'Your wallet is connected to the wrong chain.',
-}
 
 const styles = createStyles({
   executionWarningRow: {
@@ -31,28 +24,36 @@ const styles = createStyles({
 const useStyles = makeStyles(styles)
 
 type TransactionFailTextProps = {
+  txEstimationExecutionStatus: EstimationStatus
   isExecution: boolean
-  isCreation: boolean
-  estimationStatus: EstimationStatus
 }
 
 export const TransactionFailText = ({
+  txEstimationExecutionStatus,
   isExecution,
-  isCreation,
-  estimationStatus,
 }: TransactionFailTextProps): React.ReactElement | null => {
   const classes = useStyles()
+  const threshold = useSelector(currentSafeThreshold)
   const isWrongChain = useSelector(shouldSwitchWalletChain)
-  const isOwner = useSelector(grantedSelector)
+  const isGranted = useSelector(grantedSelector)
 
-  const showError =
-    isWrongChain || (isExecution && estimationStatus === EstimationStatus.FAILURE) || (isCreation && !isOwner)
-  if (!showError) return null
+  if (txEstimationExecutionStatus !== EstimationStatus.FAILURE) {
+    return null
+  }
 
-  const errorDesc = isCreation ? ErrorMessage.creation : ErrorMessage.execution
-  const defaultMsg = `${ErrorMessage.general} ${errorDesc}`
+  let errorDesc = 'To save gas costs, avoid creating the transaction.'
+  if (isExecution) {
+    errorDesc =
+      threshold && threshold > 1
+        ? `To save gas costs, reject this transaction`
+        : `To save gas costs, avoid executing the transaction.`
+  }
 
-  const error = isWrongChain ? ErrorMessage.wrongChain : isCreation && !isOwner ? ErrorMessage.notOwner : defaultMsg
+  const error = isGranted
+    ? `This transaction will most likely fail. ${errorDesc}`
+    : isWrongChain
+    ? 'Your wallet is connected to the wrong chain.'
+    : "You are currently not an owner of this Safe and won't be able to submit this transaction."
 
   return (
     <Row align="center">
@@ -63,6 +64,3 @@ export const TransactionFailText = ({
     </Row>
   )
 }
-
-// For tests
-export const _ErrorMessage = ErrorMessage

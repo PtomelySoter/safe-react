@@ -1,8 +1,7 @@
-import { Button, Loader, theme, Title as TitleSRC } from '@gnosis.pm/safe-react-components'
+import { Button, Icon, Loader, theme, Title as TitleSRC } from '@gnosis.pm/safe-react-components'
 import { ButtonProps as ButtonPropsMUI, Modal as ModalMUI } from '@material-ui/core'
 import cn from 'classnames'
-import { ReactElement, ReactNode } from 'react'
-import { ModalHeader } from 'src/routes/safe/components/Balances/SendModal/screens/ModalHeader'
+import { ReactElement, ReactNode, ReactNodeArray } from 'react'
 import styled from 'styled-components'
 
 type Theme = typeof theme
@@ -87,6 +86,36 @@ export default GnoModal
 /* Generic Modal */
 /*****************/
 
+/*** Header ***/
+const HeaderSection = styled.div`
+  display: flex;
+  padding: 24px 18px 24px 24px;
+  border-bottom: 2px solid ${({ theme }) => theme.colors.separator};
+
+  h5 {
+    color: ${({ theme }) => theme.colors.text};
+  }
+
+  .close-button {
+    align-self: flex-end;
+    background: none;
+    border: none;
+    padding: 5px;
+    width: 26px;
+    height: 26px;
+
+    span {
+      margin-right: 0;
+    }
+
+    :hover {
+      background: ${({ theme }) => theme.colors.separator};
+      border-radius: 16px;
+      cursor: pointer;
+    }
+  }
+`
+
 const TitleStyled = styled(TitleSRC)`
   display: flex;
   align-items: center;
@@ -119,11 +148,21 @@ const Title = ({ children, ...props }: TitleProps): ReactElement => (
 
 interface HeaderProps {
   children?: ReactNode
-  onClose?: () => unknown
+  onClose?: (event: any) => void
 }
 
-const Header = ({ children = '', onClose = () => null }: HeaderProps): ReactElement => {
-  return <ModalHeader title={children} onClose={onClose} />
+const Header = ({ children, onClose }: HeaderProps): ReactElement => {
+  return (
+    <HeaderSection className="modal-header">
+      {children}
+
+      {onClose && (
+        <button className="close-button" onClick={onClose}>
+          <Icon size="sm" type="cross" />
+        </button>
+      )}
+    </HeaderSection>
+  )
 }
 
 Header.Title = Title
@@ -135,7 +174,7 @@ const BodySection = styled.div<{ withoutPadding: BodyProps['withoutPadding'] }>`
 `
 
 interface BodyProps {
-  children: ReactNode
+  children: ReactNode | ReactNodeArray
   withoutPadding?: boolean
 }
 
@@ -242,7 +281,7 @@ const Buttons = ({ cancelButtonProps = {}, confirmButtonProps = {} }: ButtonsPro
 }
 
 interface FooterProps {
-  children: ReactNode
+  children: ReactNode | ReactNodeArray
   withoutBorder?: boolean
 }
 
