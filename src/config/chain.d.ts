@@ -24,6 +24,8 @@ export const CHAIN_ID: Record<ChainName, ChainId> = {
   ARBITRUM: '42161',
   AVALANCHE: '43114',
   VOLTA: '73799',
+  SYS_TESTNET: '5700',
+  SYS: '57',
 }
 
 // Values match that required of onboard and returned by CGW
